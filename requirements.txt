@@ -1,0 +1,4 @@
+reflex==0.5.3
+firebase-admin
+requests
+python-dotenv
