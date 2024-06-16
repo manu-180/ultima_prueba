@@ -3,13 +3,11 @@ import firebase_admin
 import os
 import asyncio
 import requests as rq
-import re
 import smtplib
 import http.cookies
 from firebase_admin import auth, db, credentials
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
-from datetime import time
 
 
 async def check_database_periodically():
@@ -21,8 +19,9 @@ async def check_database_periodically():
 
 class Horarios(rx.Base):
     id: int
-    horario: str
-    usuarios: list
+    dia: dict
+
+    
 
 load_dotenv()
 
@@ -32,31 +31,37 @@ GOOGLE_APPLICATION_CREDENTIALS = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"
 firebase_sdk = credentials.Certificate(GOOGLE_APPLICATION_CREDENTIALS)
 firebase_admin.initialize_app(firebase_sdk, {"databaseURL": DATABASE_URL})
 
-# ref = db.reference("/Horarios")
-# ref.push({"id": 1, "horario":"12:00", "usuarios": ["julinv@hotmail.com"]})
-# ref.push({"id": 2, "horario":"14:00", "usuarios": ["julinv@hotmail.com"]})
-# ref.push({"id": 3, "horario":"16:00", "usuarios": ["julinv@hotmail.com"]})
-# ref.push({"id": 4, "horario":"18:00", "usuarios": ["julinv@hotmail.com"]})
-# ref.push({"id": 5, "horario":"20:00", "usuarios": ["julinv@hotmail.com"]})
+class CookieState:
+    def __init__(self):
+        self.cookie = "2"
+    
+    def change_cookie(self, email):
+        self.cookie = email
+            
+            
+cookie_state = CookieState()
 
-class CookieState(rx.State):
-    cookie: str = rx.Cookie("")
 
 class FireBase():
-    ref = db.reference("/Horarios")
+    ref = db.reference("/Horarios/")
 
     def data(self):
-        data = self.ref.get("-NzBFPwsONhMP5SKqs9u")
-        dict_data = data[0]
-        class_data = []
 
-        for clave, valor in dict_data.items():
-            class_data.append(Horarios(
-                id=valor["id"],
-                horario=valor["horario"],
-                usuarios=valor["usuarios"]
-            ))
-        return class_data
+        class_data = []
+        
+        data = self.ref.get("dia")
+        print(data)
+        # dict_data = data[0]
+        # resultado = []
+        # class_data = []
+
+        # for clave, valor in dict_data.items():
+        #     list_days = valor["dia"]
+        #     class_data.append([Horarios(id=valor["id"],dia= list_days)])
+        # for i in class_data:
+        #     data = i[0]
+        #     resultado.append(data)
+        # return resultado
 
     def horarios(self):
         horarios = []
@@ -64,88 +69,114 @@ class FireBase():
             horarios.append(i.horario)
         return horarios
 
-    def unico_horario(self, id):
+    def unico_horario(self, dia, hora ):
+        horario_ref = db.reference(f'/Horarios/dia/{dia}/')
+        horarios_diccionario =horario_ref.get()
+        if hora in horarios_diccionario:
+            horario = horarios_diccionario[hora]
+            print( hora)
+        # for index, i in enumerate(horarios_diccionario):
+        #     if id == index+1:
+        #         return i
+                
+            
+    def encontrar_usuario(self,id, user):
         for i in self.data():
-            if i.id == id:
-                return i.horario
+            if i.id == id : 
+                if user in i.usuarios:
+                    return True
+                return False
+            
 
-    def cant_users(self, id) -> int:
-        for i in self.data():
-            if i.id == id:
-                lista_filtrada = []
-                lista_usuarios = i.usuarios
-                for usuario in lista_usuarios:
-                    if usuario != None:
-                        lista_filtrada.append(usuario)
-        return len(lista_filtrada)
+    def cant_users(self, dia, hora):
+        horario_ref = db.reference(f'/Horarios/dia/{dia}/')
+        cant_users = 0
+        list_filtrada = []
+        horarios_diccionario = horario_ref.get()
+        
+        if horarios_diccionario is not None:
+            # Filtra la lista para la hora específica si existe
+            if hora in horarios_diccionario:
+                lista_hora = horarios_diccionario[hora]
+                horarios_diccionario[hora] = [email for email in lista_hora if email is not None]
+        for clave, valor in horarios_diccionario.items():
+            if clave == hora:
+                cant_users = len(valor)
+        return cant_users
+
+            
                         
 
-    def check_cant_users(self, id):
-        if self.cant_users(id) < 4:
+    def check_cant_users(self, dia, hora):
+        if self.cant_users( dia, hora) < 4:
             return True
         else: return False
 
-    def agregar_usuario_a_horario(self, id, nuevo_usuario):
+    def agregar_usuario_a_horario(self, dia, hora):
+
+        horario_ref = db.reference(f'/Horarios/dia/{dia}/')
+        horarios_diccionario = horario_ref.get()
+        
+        try:
+            if horarios_diccionario is None:
+                horarios_diccionario = {}
+            
+            if hora not in horarios_diccionario:
+                horarios_diccionario[hora] = []
+
+            usuarios = horarios_diccionario[hora]
+            
+            if cookie_state.cookie not in usuarios:
+                usuarios.append(cookie_state.cookie)
+            
+            horario_ref.update({hora: usuarios})
+        except Exception as e:
+            print(e)
+            print(horarios_diccionario)
+        # try:
+        #     usuarios_diccionario = usuarios_ref.get()
+        #     lista_usuarios = list(usuarios_diccionario.values())
+        #     if nuevo_usuario not in lista_usuarios:
+        #         lista_usuarios.append(nuevo_usuario)
+        #         usuarios_ref.set(lista_usuarios)
+        #     else:
+        #         print("Este usuario ya esta en la clase")
+        # except:
+        #     if nuevo_usuario not in usuarios_diccionario:
+        #         usuarios_diccionario.append(nuevo_usuario)
+        #         if self.cant_users(id) < 4:
+        #             usuarios_ref.set(usuarios_diccionario)
+        #         else:
+        #             print("La clase está llena")
+
+
+    def eliminar_usuario_a_horario(self, id, usuario):
         usuarios_ref = db.reference(f'/Horarios/{self.buscar_horario(id)}/usuarios')
         try:
             usuarios_diccionario = usuarios_ref.get()
             lista_usuarios = list(usuarios_diccionario.values())
-            if nuevo_usuario not in lista_usuarios:
-                lista_usuarios.append(nuevo_usuario)
+            if usuario in lista_usuarios:
+                lista_usuarios.remove(usuario)
                 usuarios_ref.set(lista_usuarios)
             else:
-                print("Este usuario ya esta en la clase")
+                print("Este usuario NO esta en la clase")
         except:
-            if nuevo_usuario not in usuarios_diccionario:
-                usuarios_diccionario.append(nuevo_usuario)
-                if self.cant_users(id) < 4:
-                    usuarios_ref.set(usuarios_diccionario)
-                else:
-                    print("La clase está llena")
+            if usuario  in usuarios_diccionario:
+                usuarios_diccionario.remove(usuario)
+                usuarios_ref.set(usuarios_diccionario)
+            else:
+                print("Este usuario NO esta en la clase")
+    
 
     def buscar_horario(self, id):
-        data = self.ref.get("-NzBFPwsONhMP5SKqs9u")
+        data = self.ref.get("-O-H_Za4uQ930lMYfNo6")
         dict_data = data[0]
         list_keys = list(dict_data.keys())
         for index, i in enumerate(list_keys):
             if index + 1 == id :
                 return i
         
-
-    def reservar(self, id, new_user):
-        data = self.ref.get("-NzBFPwsONhMP5SKqs9u")
-        dict_data = data[0]
-        for clave, valor in dict_data.items():
-            if valor["id"] == id:
-                usuarios = self.ref.child(clave)
-                dict_users = valor["usuarios"]
-                dict_values = dict_users.values()
-                list_users = []
-                for i in dict_values:
-                    list_users.append(i)
-                if self.cant_users(id) < 4:
-                    list_users.append(new_user)
-                    usuarios.update({"usuarios": list_users})
-                else:
-                    print("La clase está llena")
-
-    def cancelar(self, id):
-        data = self.ref.get("-NzBFPwsONhMP5SKqs9u")
-        dict_data = data[0]
-        for clave, valor in dict_data.items():
-            if valor["id"] == id:
-                usuarios = self.ref.child(clave)
-                contador = valor["cant_users"]
-                if contador > 0:
-                    usuarios.update({"cant_users": contador - 1})
     
-    def store_turno(user_id, turno):
-        ref = db.reference(f'Horarios/{user_id}')
-        ref.push(turno)
-
-    def get_turnos(user_id):
-        ref = db.reference(f'Horarios/{user_id}')
-        return ref.get()
 
     def get_user_data(id_token):
         try:
@@ -158,6 +189,18 @@ class FireBase():
             return None, None
 
 firebase = FireBase()
+
+# print(firebase.cant_users("jueves", "14:00"))
+
+# Recorrer la lista original
+# for i in range(0, len(original_list), 2):
+#     print(original_list[i])
+#     print(original_list[i + 1])
+    # diccionario = original_list[i]
+    # numero = original_list[i + 1]
+    # transformed_list.append({numero: diccionario})
+
+# print(transformed_list)
 
 
 class Login():
@@ -222,7 +265,7 @@ class Login():
             user = auth.get_user(uid)
             return user.email
         except Exception as e:
-            print('Error fetching user data:', e)
+            print('todavia no ingreso ningun usuario')
 
     
 
@@ -275,9 +318,6 @@ class Login():
         else:
             print('Error reservando turno, usuario no autenticado')
 
-
-
-
 login = Login()
         
 
@@ -288,14 +328,6 @@ login = Login()
 
 class ReservaCancela(rx.State):
     
-    async def reservar_turno(self, id: int) -> list:
-        reservar_la_clase = firebase.reservar(id)
-        return reservar_la_clase
-
-
-    async def cancelar_turno(id: int):
-        cancelar_la_clase = firebase.cancelar(id)
-        return cancelar_la_clase
     
     async def printt(self):
         printt = printtt()
@@ -306,13 +338,19 @@ class ReservaCancela(rx.State):
         print(data)
         return data
     
-    async def agregar_usuario(self, id):
-        agregar = agregar_usuarioo(id)
+    async def eliminar_usuario(self, dia, hora):
+        eliminar = eliminar_usuarioo(dia, hora)
+        return eliminar
+
+    async def agregar_usuario(self, dia, hora):
+        agregar = agregar_usuarioo(dia, hora)
         return agregar
     
-def agregar_usuarioo(id):
-    user = login.get_user_data(CookieState.cookie)
-    firebase.agregar_usuario_a_horario(id, user)
+def eliminar_usuarioo( dia, hora):
+    firebase.eliminar_usuario_a_horario( dia, hora)
+
+def agregar_usuarioo( dia, hora):
+    firebase.agregar_usuario_a_horario( dia, hora)
 
 async def data():
     return firebase.data()
@@ -323,22 +361,37 @@ class Color():
 
 color = Color()
 
+
+class ButtonState(rx.State):
+    show_text_lunes: bool = False
+    show_text_martes: bool = False
+    show_text_miercoles: bool = False
+    show_text_jueves: bool = False
+    show_text_viernes: bool = False
+
+    def toggle_text(self, id):
+        if id == 1:
+            self.show_text_lunes = not self.show_text_lunes
+        elif id == 2:
+            self.show_text_martes = not self.show_text_martes
+        elif id == 3:
+            self.show_text_miercoles = not self.show_text_miercoles
+        elif id == 4:
+            self.show_text_jueves = not self.show_text_jueves
+        elif id == 5:
+            self.show_text_viernes = not self.show_text_viernes
+
+
+
 @rx.page(
     title="turnos",
     description="Taller de cerámica",
     # on_load=ReservaCancela.data
 )
 def index() -> rx.Component:
-    return rx.center(
-        rx.vstack(
-            crear_usuario_button(),
-            rx.divider(),
-            button_agregar_clase(1),
-            button_agregar_clase(2),
-            button_agregar_clase(3),
-            button_agregar_clase(4),
-            button_agregar_clase(5)
-        )
+    return rx.box(
+        navbar(boton=True),
+        
     )
 
 
@@ -350,14 +403,20 @@ def index() -> rx.Component:
     description="Taller de ceramica"
 )
 def crear_usuario() -> rx.Component:
-    return rx.center(
+    return rx.box(
         rx.vstack(
+            navbar(),
             rx.heading("Crea tu usuario"),
             form_create_user(),
+            rx.spacer(),
+            rx.text("ya tenes un usuario?"),
             iniciar_sesion_button(),
-            root_button()
-        )
+            root_button(),
+            width= "100%",
+            align= "center"
+        ),
     )
+
 
 @rx.page(
     route="/ingreso", 
@@ -365,58 +424,271 @@ def crear_usuario() -> rx.Component:
     description="Taller de ceramica"
 )
 def ingreso() -> rx.Component:
-    return rx.center(
+    return rx.box(
+        rx.center(
         rx.vstack(
+            navbar(),
             rx.heading("Ingresa con tu usuario"),
             form_ingresar_user(),
             button_print_cookie(),
-            root_button()
-        )
+            root_button(),
+            turnos_button(),
+            width= "100%",
+            align= "center"
+        ),
+    ),
     )
 
+@rx.page(
+        route="/turnos",
+        title="turnos ",
+        description="Taller de ceramica"
+)
+def turnos():
+    return rx.box(
+        rx.center(
+        rx.vstack(
+            navbar(),
+            rx.spacer(),
+            links_button(),
+            width= "100%",
+            align= "start"
+        ),
+    ),
+    )
+
+class UserState(rx.State):
+    email: str = "1"
+
+    @classmethod
+    def set_user_email(cls, email: str):
+        cls.email = email
 
 
 class FormState(rx.State):
     form_data: dict = {}
 
     def handle_submit(self, form_data: dict):
-        """Manejar la sumisión del formulario."""
         self.form_data = form_data
         username = form_data.get("username")
         password = form_data.get("password")
-        login.create_user(username,password)
+        login.create_user(username, password)
 
     def ingresar(self, form_data: dict):
         username = form_data.get("username")
         password = form_data.get("password")
         login.sign_in_with_email_and_password(username, password)
-        CookieState.cookie = login.sign_in_with_email_and_password(username, password)
-        print(CookieState.cookie)
+        email = login.get_user_data(login.sign_in_with_email_and_password(username, password))
+        print(email)
+        print(cookie_state.cookie)
+        cookie_state.change_cookie(email)
+        print(cookie_state.cookie)
+        # username = form_data.get("username")
+        # password = form_data.get("password")
+        # try:
+        #     token = login.sign_in_with_email_and_password(username, password)
+        #     email = login.get_user_data(token)
+        #     UserState.set_user_email(username)  # Almacenar el email en el estado
+        #     CookieState.change_cookie(username)
+        #     print(UserState.email)
+        #     print(CookieState.cookie) # Verificar si el correo se ha guardado correctamente
+        # except Exception as e:
+        #     print(f"Error al iniciar sesión: {e}")
+
+
+def links_button():
+    return rx.vstack(
+    day_button_lunes(),
+    day_button_martes(),
+    day_button_miercoles(),
+    day_button_jueves(),
+    day_button_viernes(),
+    spacing="2" ,
+    padding_top = "40px"
+    )
+
+
+def day_button_lunes():
+    return rx.hstack(
+                rx.button("lunes",
+                on_click=ButtonState.toggle_text(1),
+                width = "12em",
+            style= {
+                    "background_color": "#383956",
+                    "_hover": {
+                    "background_color": "#66A9ED"
+                    }
+                }),
+        rx.cond(
+            ButtonState.show_text_lunes,
+            button_agregar_clase("lunes","17:30")
+        ),
+        spacing="1"
+    )
+
+def day_button_martes():
+    return rx.hstack(
+                rx.button("martes",
+                on_click=ButtonState.toggle_text(2),
+                width = "12em",
+            style= {
+                    "background_color": "#383956",
+                    "_hover": {
+                    "background_color": "#66A9ED"
+                    }
+                }
+                ),
+        rx.cond(
+            ButtonState.show_text_martes,
+            rx.hstack(
+            button_agregar_clase("martes","10:00"),
+            button_agregar_clase("martes","14:00"),
+            button_agregar_clase("martes","16:30"),
+            )
+        ),
+        spacing="1"
+    )
+
+def day_button_miercoles():
+    return rx.hstack(
+                rx.button("miercoles",
+                on_click=ButtonState.toggle_text(3),
+                width = "12em",
+            style= {
+                    "background_color": "#383956",
+                    "_hover": {
+                    "background_color": "#66A9ED"
+                    }
+                }
+                ),
+        rx.cond(
+            ButtonState.show_text_miercoles,
+            rx.hstack(rx.hstack(
+            button_agregar_clase("miercoles","9:00"),
+            button_agregar_clase("miercoles","14:00"),
+            button_agregar_clase("miercoles","16:30"),
+            ))
+        ),
+        spacing="1"
+    )
+
+def day_button_jueves():
+    return rx.hstack(
+                rx.button("jueves",
+                on_click=ButtonState.toggle_text(4),
+                width = "12em",
+            style= {
+                    "background_color": "#383956",
+                    "_hover": {
+                    "background_color": "#66A9ED"
+                    }
+                }
+                ),
+        rx.cond(
+            ButtonState.show_text_jueves,
+            rx.hstack(
+            button_agregar_clase("jueves","10:00"),
+            button_agregar_clase("jueves","14:00"),
+            button_agregar_clase("jueves","16:30"),
+            )
+        ),
+        spacing="1"
+    )
+
+def day_button_viernes():
+    return rx.hstack(
+                rx.button("viernes",
+                on_click=ButtonState.toggle_text(5),
+                width = "12em",
+            style= {
+                    "background_color": "#383956",
+                    "_hover": {
+                    "background_color": "#66A9ED"
+                    }
+                }
+                ),
+        rx.cond(
+            ButtonState.show_text_viernes,
+            rx.hstack(
+            button_agregar_clase("viernes","9:00"),
+            button_agregar_clase("viernes","16:00"),
+            button_agregar_clase("viernes","18:00"),
+            )
+        ),
+        spacing="1"
+    )
 
 def button_print_cookie():
     return rx.center(
         rx.button(
             rx.text("print cookie"),
+            width = "12em",
+            style= {
+                    "background_color": "#383956",
+                    "_hover": {
+                    "background_color": "#66A9ED"
+                    }
+                },
             on_click=ReservaCancela.printt
         )
     )
 
-def button_agregar_clase(id):
+def button_agregar_clase(dia, hora):
     return rx.center(
-        rx.button(
-            rx.text(f"clase de las {firebase.unico_horario(id)}"),
-            on_click=ReservaCancela.agregar_usuario(id)
+        rx.cond(
+            firebase.check_cant_users(dia, hora),
+            button_green(dia, hora),
+            button_disabled(hora),
         )
     )
 
+def button_green(dia, hora) -> rx.Component:
+    return rx.button(
+        rx.text(f"turno de las {hora}"),
+        on_click=ReservaCancela.agregar_usuario(dia, hora),
+        color_scheme=color.color_green,
+        width="12em",
+    )
+    
+
+
+
+def button_disabled( hora) -> rx.Component:
+    return rx.center(
+        rx.button(
+            rx.text(f"turno de las {hora}"),
+            disabled=True,
+            width = "12em"
+        )
+    )
+
+# def eliminar_usuario_button(id_horario, dia,id:int):
+#     return rx.button(
+#         rx.text(f"turno de las {firebase.unico_horario(id_horario, dia, id)}"),
+#         on_click=ReservaCancela.eliminar_usuario(id),
+#         color_scheme= color.color_red,
+#         width = "12em"
+    # )
+
+
+
+
 def printtt():
-    print(login.get_user_data(CookieState.cookie))
+    print(cookie_state.cookie)
+ 
 
 def root_button():
     return rx.center(
         rx.link(
             rx.button(
-                rx.text("Horarios")
+                rx.text("Pagina inicial"),
+                width = "12em",
+                style= {
+                    "background_color": "#383956",
+                    "_hover": {
+                    "background_color": "#66A9ED"
+                    }
+                }
             ),
             href="/"
     )   )
@@ -425,7 +697,14 @@ def iniciar_sesion_button():
     return rx.center(
         rx.link(
             rx.button(
-                rx.text("iniciar sesion")
+                rx.text("iniciar sesion"),
+                width = "12em",
+                style= {
+                    "background_color": "#383956",
+                    "_hover": {
+                    "background_color": "#66A9ED"
+                    }
+                }
                 ),
                 href="/ingreso"
             ),
@@ -435,11 +714,33 @@ def crear_usuario_button():
     return rx.center(
         rx.link(
                 rx.button(
-                rx.text(
-                    "Crea tu propio usuario"
-                    )
+                rx.text("Crea tu propio usuario"),
+                width = "12em",
+                style= {
+                    "background_color": "#383956",
+                    "_hover": {
+                    "background_color": "#66A9ED"
+                    }
+                }
                 ),
                 href="/crear_usuario"
+            )
+    )
+
+def turnos_button():
+    return rx.center(
+        rx.link(
+                rx.button(
+                rx.text("Turnos"),
+                width = "12em",
+                style= {
+                    "background_color": "#383956",
+                    "_hover": {
+                    "background_color": "#66A9ED"
+                    }
+                }
+                ),
+                href="/turnos"
             )
     )
 
@@ -449,14 +750,20 @@ def form_create_user():
         rx.form(
             rx.form.field(
                 rx.form.label("Ingrese su usuario"),
-                rx.input(placeholder="Usuario", name="username"),
+                rx.input(placeholder="Usuario", name="username", color = "black"),
             ),
             rx.form.field(
                 rx.form.label("Ingrese su contraseña"),
-                rx.input(placeholder="Contraseña", type="password", name="password"),
+                rx.input(placeholder="Contraseña", type="password", name="password", color = "black"),
             ),
             rx.form.submit(
-                rx.button("Crear usuario", type="submit"),
+                rx.button("Crear usuario", type="submit",
+                        style= {
+                            "background_color": "#383956",
+                            "_hover": {
+                            "background_color": "#66A9ED"
+                            }
+                        }),
                 as_child=True,
             ),
             on_submit=FormState.handle_submit(),
@@ -469,14 +776,21 @@ def form_ingresar_user():
         rx.form(
             rx.form.field(
                 rx.form.label("Ingrese su usuario"),
-                rx.input(placeholder="Usuario", name="username"),
+                rx.input(placeholder="Usuario", name="username", color = "black"),
             ),
             rx.form.field(
                 rx.form.label("Ingrese su contraseña"),
-                rx.input(placeholder="Contraseña", type="password", name="password"),
+                rx.input(placeholder="Contraseña", type="password", name="password", color = "black"),
             ),
             rx.form.submit(
-                rx.button("Iniciar sesion", type="submit"),
+                rx.button("Iniciar sesion", type="submit",
+                        style= {
+                            "background_color": "#383956",
+                            "_hover": {
+                            "background_color": "#66A9ED"
+                            }
+                        }
+                ),
                 as_child=True,
             ),
             on_submit=FormState.ingresar(),
@@ -493,49 +807,77 @@ def comprobar_usuario():
     )
     
 
-def button_green(text, id) -> rx.Component:
-    return rx.button(
-        rx.text(text),
-        on_click=ReservaCancela.reservar_turno(id),
-        color_scheme=color.color_green
-    )
-
-def button_red(text, id) -> rx.Component:
-    return rx.center(
-        rx.button(
-            rx.text(text),
-            disabled=True,
-        ),
-        rx.button(
-            rx.text("¿Cancelar esta clase?"),
-            on_click=ReservaCancela.cancelar_turno(id)
-        ),
-        rx.vstack(
-            rx.text("(Si no cancelas con un día de anticipación",
-                    size="1",
-                    spacing="0px",
-                    padding="0px",
-                    margin="0px"),
-            rx.text("no podrás recuperar la clase)",
-                    size="1",
-                    spacing="0px",
-                    padding="0px",
-                    margin="0px"
-            )
+def navbar(boton = False) -> rx.Component:
+    return rx.box(
+            rx.hstack(
+                rx.link(
+                    rx.text("Taller de ceramica",
+                        padding_left="1em"
+                    ),
+                    href="/"
+                ),
+                # rx.spacer(),
+                # turnos_button(),
+                rx.spacer(),
+            rx.box(
+                    rx.cond(
+                    boton,
+                    rx.hstack(
+                    crear_usuario_button(),
+                    iniciar_sesion_button(),
+                    width = "100%",
+                    align_items="end")
+                ),
+                )
+            ),
+            width = "100%",
+        style=dict(
+            font_family="Confortaa-Medium",
+            font_size = "1.3em",
+            position="sticky",
+            bg="#383956",
+            padding_y="0.5em",
+            padding_x="0.5em",
+            z_index="999",
+            top="0"
         )
     )
 
-def button(id):
-    return rx.cond(
-        firebase.check_cant_users(id),
-        button_green(f"Turno de las {firebase.unico_horario(id)}", id),
-        button_red(f"Turno de las {firebase.unico_horario(id)}", id)
-    )
 
-app = rx.App()
+
+BASE_STYLE = {
+    "font_family": "1em",
+    "font_weight": "300",
+    "background_color": "#FFFDF4",
+    rx.heading: {
+        "color": "#FCFDFD",
+        "font_family": "Poppins",
+        "font_weight": "500"
+    },
+    rx.button: {
+        "width": "100%",
+        "height": "100%",
+        "padding": "0.5em",
+        "border_radius": "0.8em",
+        "white_space": "normal",
+        "text_align": "start",
+        "--cursor-button": "pointer",
+    },
+    rx.link: {
+        "color": "#FCFDFD",
+        "text_decoration": "none",
+        "_hover": {}
+    }
+}
+
+
+app = rx.App(
+    style=BASE_STYLE,
+    )
 app.add_page(index)
 app.add_page(crear_usuario)
 app.add_page(ingreso)
+
 # app.add_page(user_info)
 # async def main():
 #     # Iniciar la tarea de verificación periódica de la base de datos
@@ -544,3 +886,4 @@ app.add_page(ingreso)
 
 # if name == "main":
 #     asyncio.run(main())
+#"52875400 lucas 12/6"
