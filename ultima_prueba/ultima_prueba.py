@@ -28,7 +28,7 @@ load_dotenv()
 DATABASE_URL = os.environ.get("DATABASE_URL")
 GOOGLE_APPLICATION_CREDENTIALS = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
 
-firebase_sdk = credentials.Certificate(f"C:\\Users\\Manuel\\Desktop\\Folder\\ultima_prueba\\{GOOGLE_APPLICATION_CREDENTIALS}")
+firebase_sdk = credentials.Certificate(GOOGLE_APPLICATION_CREDENTIALS)
 firebase_admin.initialize_app(firebase_sdk, {"databaseURL": DATABASE_URL})
 
 class CookieState:
