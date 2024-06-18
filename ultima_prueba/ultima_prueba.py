@@ -32,7 +32,7 @@ firebase_sdk = credentials.Certificate(GOOGLE_APPLICATION_CREDENTIALS)
 firebase_admin.initialize_app(firebase_sdk, {"databaseURL": DATABASE_URL})
 
 class CookieState:
-    def __init__(self):
+    def _init_(self):
         self.cookie = "2"
     
     def change_cookie(self, email):
