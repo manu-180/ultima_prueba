@@ -137,7 +137,7 @@ class FireBase():
         #     usuarios_diccionario = usuarios_ref.get()
         #     lista_usuarios = list(usuarios_diccionario.values())
         #     if nuevo_usuario not in lista_usuarios:
-        #         lista_usuarios.append(nuevo_usuario)
+        #         lista_usuarios.append(nuevo_usuario)asd
         #         usuarios_ref.set(lista_usuarios)
         #     else:
         #         print("Este usuario ya esta en la clase")
@@ -145,7 +145,7 @@ class FireBase():
         #     if nuevo_usuario not in usuarios_diccionario:
         #         usuarios_diccionario.append(nuevo_usuario)
         #         if self.cant_users(id) < 4:
-        #             usuarios_ref.set(usuarios_diccionario)
+        #             usuarios_reasdasdf.set(usuarios_diccionario)
         #         else:
         #             print("La clase está llena")
 
