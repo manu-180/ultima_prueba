@@ -1,6 +1,6 @@
-# # Cambiar directorio
-# echo "Changing directory to ultima_prueba"
-# cd C:\Users\Manuel\Desktop\Folder\ultima_prueba
+# Cambiar directorio
+echo "Changing directory to ultima_prueba"
+cd C:\Users\Manuel\Desktop\Folder\ultima_prueba
 
 echo "activando variable de entorno " 
 py -3 -m venv .venv
