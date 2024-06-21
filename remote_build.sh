@@ -7,3 +7,6 @@ Remove-Item -Recurse -Force public
 mkdir public
 Expand-Archive -Path frontend.zip -DestinationPath public
 Remove-Item -Force frontend.zip
+git add .
+git commit -m "Adjust workflow for Windows environment"
+git push
