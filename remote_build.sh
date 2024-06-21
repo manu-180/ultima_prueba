@@ -2,9 +2,12 @@
 echo "Changing directory to ultima_prueba"
 cd C:\Users\Manuel\Desktop\Folder\ultima_prueba
 
+echo "activando variable de entorno " 
+py -3 -m venv .venv
+.venv\Scripts\activate
 # Actualizar pip
 echo "Updating pip"
-C:\Users\Manuel\Desktop\Folder\x\entorno_con_3.11\Scripts\python.exe -m pip install --upgrade pip
+C:\Users\Manuel\Desktop\Folder\ultima_prueba\entorno_con_3.11\Scripts\python -m pip install --upgrade pip
 
 # Instalar requerimientos
 echo "Installing requirements"
