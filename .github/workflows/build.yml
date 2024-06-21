@@ -1,4 +1,4 @@
-name: Static Build1
+name: automatizacion
 
 on:
   push:
