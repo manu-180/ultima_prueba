@@ -32,6 +32,7 @@ firebase_sdk = credentials.Certificate(GOOGLE_APPLICATION_CREDENTIALS)
 firebase_admin.initialize_app(firebase_sdk, {"databaseURL": DATABASE_URL})
 
 class CookieState:
+
     def _init_(self):
         self.cookie = "2"
     
@@ -51,17 +52,7 @@ class FireBase():
         
         data = self.ref.get("dia")
         print(data)
-        # dict_data = data[0]
-        # resultado = []
-        # class_data = []
-
-        # for clave, valor in dict_data.items():
-        #     list_days = valor["dia"]
-        #     class_data.append([Horarios(id=valor["id"],dia= list_days)])
-        # for i in class_data:
-        #     data = i[0]
-        #     resultado.append(data)
-        # return resultado
+        
 
     def horarios(self):
         horarios = []
@@ -69,25 +60,8 @@ class FireBase():
             horarios.append(i.horario)
         return horarios
 
-    def unico_horario(self, dia, hora ):
-        horario_ref = db.reference(f'/Horarios/dia/{dia}/')
-        horarios_diccionario =horario_ref.get()
-        if hora in horarios_diccionario:
-            horario = horarios_diccionario[hora]
-            print( hora)
-        # for index, i in enumerate(horarios_diccionario):
-        #     if id == index+1:
-        #         return i
                 
             
-    def encontrar_usuario(self,id, user):
-        for i in self.data():
-            if i.id == id : 
-                if user in i.usuarios:
-                    return True
-                return False
-            
-
     def cant_users(self, dia, hora):
         horario_ref = db.reference(f'/Horarios/dia/{dia}/')
         cant_users = 0
@@ -95,7 +69,6 @@ class FireBase():
         horarios_diccionario = horario_ref.get()
         
         if horarios_diccionario is not None:
-            # Filtra la lista para la hora específica si existe
             if hora in horarios_diccionario:
                 lista_hora = horarios_diccionario[hora]
                 horarios_diccionario[hora] = [email for email in lista_hora if email is not None]
@@ -118,54 +91,41 @@ class FireBase():
         horarios_diccionario = horario_ref.get()
         
         try:
-            if horarios_diccionario is None:
-                horarios_diccionario = {}
-            
-            if hora not in horarios_diccionario:
-                horarios_diccionario[hora] = []
 
             usuarios = horarios_diccionario[hora]
             
             if cookie_state.cookie not in usuarios:
-                usuarios.append(cookie_state.cookie)
+                if self.cant_users(dia, hora) < 4 :
+                    usuarios.append(cookie_state.cookie)
+                print("la clase esta llena")
             
             horario_ref.update({hora: usuarios})
         except Exception as e:
-            print(e)
-            print(horarios_diccionario)
-        # try:
-        #     usuarios_diccionario = usuarios_ref.get()
-        #     lista_usuarios = list(usuarios_diccionario.values())
-        #     if nuevo_usuario not in lista_usuarios:
-        #         lista_usuarios.append(nuevo_usuario)asd
-        #         usuarios_ref.set(lista_usuarios)
-        #     else:
-        #         print("Este usuario ya esta en la clase")
-        # except:
-        #     if nuevo_usuario not in usuarios_diccionario:
-        #         usuarios_diccionario.append(nuevo_usuario)
-        #         if self.cant_users(id) < 4:
-        #             usuarios_reasdasdf.set(usuarios_diccionario)
-        #         else:
-        #             print("La clase está llena")
+            usuarios = list(horarios_diccionario[hora].values())
+            if cookie_state.cookie not in usuarios:
+                if self.cant_users(dia, hora) < 4 :
+                    usuarios.append(cookie_state.cookie)
+                print("la clase esta llena")
+            horario_ref.update({hora: usuarios})
 
 
-    def eliminar_usuario_a_horario(self, id, usuario):
-        usuarios_ref = db.reference(f'/Horarios/{self.buscar_horario(id)}/usuarios')
+
+    def eliminar_usuario_a_horario(self, dia, hora, usuario):
+        usuarios_ref = db.reference(f'/Horarios/dia/{dia}/{hora}')
+        usuarios_diccionario = usuarios_ref.get()
         try:
-            usuarios_diccionario = usuarios_ref.get()
-            lista_usuarios = list(usuarios_diccionario.values())
+            lista_usuarios = usuarios_ref.get()
             if usuario in lista_usuarios:
                 lista_usuarios.remove(usuario)
                 usuarios_ref.set(lista_usuarios)
             else:
-                print("Este usuario NO esta en la clase")
+                print("Este usuario no esta en la clase")
         except:
-            if usuario  in usuarios_diccionario:
-                usuarios_diccionario.remove(usuario)
-                usuarios_ref.set(usuarios_diccionario)
-            else:
-                print("Este usuario NO esta en la clase")
+            # if usuario  in usuarios_diccionario:
+            #     usuarios_diccionario.remove(usuario)
+            #     usuarios_ref.set(usuarios_diccionario)
+            # else:
+                print("raro")
     
 
     def buscar_horario(self, id):
@@ -178,7 +138,7 @@ class FireBase():
         
     
 
-    def get_user_data(id_token):
+    def get_user_data(self, id_token):
         try:
             decoded_token = auth.verify_id_token(id_token)
             uid = decoded_token['uid']
@@ -187,21 +147,25 @@ class FireBase():
         except Exception as e:
             print('Error fetching user data:', e)
             return None, None
+        
+    def encontrar_usuario(self, user):
+        try:
+            horario_ref = db.reference(f'/Horarios/dia')
+            horarios_diccionario = horario_ref.get()
+            horarios = []
+            for dia, horarios_diccionario in horarios_diccionario.items():            
+                for hora, usuarios in horarios_diccionario.items():
+                    if user in usuarios:
+                        horarios.append(f'{dia} a las {hora}')
+            return horarios
+        except:
+            print(horarios_diccionario)
+            print("funcion encontrar_usuario")
+        
 
 firebase = FireBase()
 
-# print(firebase.cant_users("jueves", "14:00"))
-
-# Recorrer la lista original
-# for i in range(0, len(original_list), 2):
-#     print(original_list[i])
-#     print(original_list[i + 1])
-    # diccionario = original_list[i]
-    # numero = original_list[i + 1]
-    # transformed_list.append({numero: diccionario})
-
-# print(transformed_list)
-
+# firebase.agregar_usuario_a_horario("miercoles", "14:00" )
 
 class Login():
     def create_user(self, email, password):
@@ -265,7 +229,7 @@ class Login():
             user = auth.get_user(uid)
             return user.email
         except Exception as e:
-            print('todavia no ingreso ningun usuario')
+            print(e)
 
     
 
@@ -338,16 +302,16 @@ class ReservaCancela(rx.State):
         print(data)
         return data
     
-    async def eliminar_usuario(self, dia, hora):
-        eliminar = eliminar_usuarioo(dia, hora)
+    async def eliminar_usuario(self, dia, hora, usuario):
+        eliminar = eliminar_usuarioo(dia, hora, usuario)
         return eliminar
 
     async def agregar_usuario(self, dia, hora):
         agregar = agregar_usuarioo(dia, hora)
         return agregar
     
-def eliminar_usuarioo( dia, hora):
-    firebase.eliminar_usuario_a_horario( dia, hora)
+def eliminar_usuarioo( dia, hora, usuario):
+    firebase.eliminar_usuario_a_horario( dia, hora, usuario)
 
 def agregar_usuarioo( dia, hora):
     firebase.agregar_usuario_a_horario( dia, hora)
@@ -411,7 +375,6 @@ def crear_usuario() -> rx.Component:
             rx.spacer(),
             rx.text("ya tenes un usuario?"),
             iniciar_sesion_button(),
-            root_button(),
             width= "100%",
             align= "center"
         ),
@@ -430,9 +393,6 @@ def ingreso() -> rx.Component:
             navbar(),
             rx.heading("Ingresa con tu usuario"),
             form_ingresar_user(),
-            button_print_cookie(),
-            root_button(),
-            turnos_button(),
             width= "100%",
             align= "center"
         ),
@@ -451,11 +411,49 @@ def turnos():
             navbar(),
             rx.spacer(),
             links_button(),
+            rx.spacer(),
+            rx.spacer(),
+            rx.spacer(),
+            mis_horarios_button(),
             width= "100%",
             align= "start"
         ),
     ),
     )
+
+@rx.page(
+        route="/mis_horarios",
+        title="mis horarios ",
+        description="Taller de ceramica"
+)
+def mis_horarios():
+    horarios = firebase.encontrar_usuario("ivannarisaro@hotmail.com")
+
+    horarios_boxes = [
+        rx.box(
+            rx.hstack(
+            text_box(f"Tienes turno el día {horario}"),
+            eliminar_usuario_button(horario.split(' a las ')[0], horario.split(' a las ')[1], "ivannarisaro@hotmail.com")
+            )
+        )
+        for horario in horarios
+    ]
+
+    return rx.box(
+        rx.center(
+            rx.vstack(
+                navbar(),  
+                rx.heading(rx.text("Tus horarios son :")),  
+                rx.heading("Tus horarios son :"), 
+                *horarios_boxes,
+                width = "100%"  
+            )
+        )
+    )
+
+# horarios = firebase.encontrar_usuario("ivannarisaro@hotmail.com")
+
+
 
 class UserState(rx.State):
     email: str = "1"
@@ -478,6 +476,7 @@ class FormState(rx.State):
         username = form_data.get("username")
         password = form_data.get("password")
         login.sign_in_with_email_and_password(username, password)
+        print(login.sign_in_with_email_and_password(username, password))
         email = login.get_user_data(login.sign_in_with_email_and_password(username, password))
         print(email)
         print(cookie_state.cookie)
@@ -495,7 +494,10 @@ class FormState(rx.State):
         # except Exception as e:
         #     print(f"Error al iniciar sesión: {e}")
 
+def text_box(text: str):
+    return rx.box(rx.text.strong(text))
 
+    
 def links_button():
     return rx.vstack(
     day_button_lunes(),
@@ -662,16 +664,30 @@ def button_disabled( hora) -> rx.Component:
         )
     )
 
-# def eliminar_usuario_button(id_horario, dia,id:int):
-#     return rx.button(
-#         rx.text(f"turno de las {firebase.unico_horario(id_horario, dia, id)}"),
-#         on_click=ReservaCancela.eliminar_usuario(id),
-#         color_scheme= color.color_red,
-#         width = "12em"
-    # )
+def eliminar_usuario_button(dia, hora, usuario):
+    return rx.button(
+        rx.text("Cancelar turno"),
+        on_click=ReservaCancela.eliminar_usuario(dia, hora, usuario),
+        color_scheme= color.color_red,
+        width = "12em"
+    )
 
 
-
+def mis_horarios_button():
+    return rx.center(
+        rx.link(
+            rx.button(
+                rx.text("Mis horarios"),
+                width = "12em",
+                style= {
+                    "background_color": "#383956",
+                    "_hover": {
+                    "background_color": "#66A9ED"
+                    }
+                }
+            ),
+            href="/mis_horarios"
+    )   )
 
 def printtt():
     print(cookie_state.cookie)
@@ -744,6 +760,55 @@ def turnos_button():
             )
     )
 
+def desplegable_button():
+    return rx.menu.root(
+        rx.menu.trigger(
+            rx.button(
+                rx.icon("chevron-down", color="white"),
+                variant="ghost",
+                size="2",
+                width="6em",
+                style={
+                    "background_color": "#383956",
+                    "_hover": {
+                        "background_color": "#66A9ED"
+                    }
+                }
+            ),
+        ),
+        rx.menu.content(
+            rx.link(
+                rx.button(
+                    rx.text("turnos"),
+                    width="12em",
+                    style={
+                        "background_color": "#383956",
+                        "_hover": {
+                            "background_color": "#66A9ED"
+                        }
+                    }
+                ),
+                href="/turnos",
+                style={"margin_bottom": "0.5em"}  # Añade margen inferior aquí
+            ),
+            rx.link(
+                rx.button(
+                    rx.text("mis turnos"),
+                    width="12em",
+                    style={
+                        "background_color": "#383956",
+                        "_hover": {
+                            "background_color": "#66A9ED"
+                        }
+                    }
+                ),
+                href="/mis_horarios",
+                style={"margin_bottom": "2.5em"}  # Añade margen inferior aquí
+            ),
+        ),
+        style={"margin_top": "0.5em"}  # Añade margen superior al menú desplegable completo
+    )
+
 
 def form_create_user():
     return rx.vstack(
@@ -765,6 +830,7 @@ def form_create_user():
                             }
                         }),
                 as_child=True,
+                on_click=rx.redirect("/"),
             ),
             on_submit=FormState.handle_submit(),
             reset_on_submit=True,
@@ -783,7 +849,7 @@ def form_ingresar_user():
                 rx.input(placeholder="Contraseña", type="password", name="password", color = "black"),
             ),
             rx.form.submit(
-                rx.button("Iniciar sesion", type="submit",
+                    rx.button("Iniciar sesion", type="submit",
                         style= {
                             "background_color": "#383956",
                             "_hover": {
@@ -792,6 +858,7 @@ def form_ingresar_user():
                         }
                 ),
                 as_child=True,
+                on_click=rx.redirect("/"),
             ),
             on_submit=FormState.ingresar(),
             reset_on_submit=True,
@@ -818,6 +885,7 @@ def navbar(boton = False) -> rx.Component:
                 ),
                 # rx.spacer(),
                 # turnos_button(),
+                desplegable_button(),
                 rx.spacer(),
             rx.box(
                     rx.cond(
@@ -877,6 +945,7 @@ app = rx.App(
 app.add_page(index)
 app.add_page(crear_usuario)
 app.add_page(ingreso)
+app.add_page(mis_horarios)
 
 # app.add_page(user_info)
 # async def main():
