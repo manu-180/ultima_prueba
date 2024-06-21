@@ -1,12 +1,14 @@
-
-echo "activando variable de entorno " 
+# Activar entorno virtual de Python
+echo "Activando entorno virtual"
 py -3 -m venv .venv
-.venv\Scripts\activate
+.\.venv\Scripts\Activate.ps1
+
 # Actualizar pip
-echo "actualizando pip"
+echo "Actualizando pip"
 python -m pip install --upgrade pip
+
 # Instalar requerimientos
-echo "instalando requirements"
+echo "Instalando requirements"
 pip install -r "requirements.txt"
 
 # Inicializar reflex
