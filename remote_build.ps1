@@ -28,4 +28,4 @@ try {
 }
 
 # Listar archivos en el directorio actual para depuración después de reflex export
-Write-Host "Listando archivos en el
+Write-Host "Listando archivos en el"
