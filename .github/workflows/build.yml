@@ -24,7 +24,7 @@ jobs:
         run: Set-ExecutionPolicy RemoteSigned -Scope Process
         shell: pwsh
       - name: Run build script
-        run: ./remote_build.sh
+        run: ./remote_build.ps1
         shell: pwsh
       - name: Commit and Push changes
         uses: stefanzweifel/git-auto-commit-action@v5
