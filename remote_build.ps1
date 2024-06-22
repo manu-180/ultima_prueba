@@ -31,7 +31,7 @@ if (Test-Path -Path "frontend.zip") {
         New-Item -ItemType Directory -Path "public"
     }
     # Extraer el contenido de frontend.zip a public
-    Expand-Archive -Path "frontend.zip" -DestinationPath "public"
+    Expand-Archive -Path "frontend.zip" -DestinationPath "public" -Force
     # Eliminar el archivo frontend.zip
     Write-Host "Removiendo frontend.zip"
     Remove-Item -Path "frontend.zip" -Force
