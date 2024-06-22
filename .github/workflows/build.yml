@@ -5,7 +5,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: '*/6 * * * *'
+    - cron: '*/6 * * * *' 
 
 jobs:
   build:
@@ -22,13 +22,6 @@ jobs:
           python-version: '3.11'
       - name: Set PowerShell Execution Policy
         run: Set-ExecutionPolicy RemoteSigned -Scope Process
-        shell: pwsh
-      - name: Verify remote_build.sh presence and contents
-        run: |
-          echo "Current directory contents:"
-          ls -la
-          echo "Contents of remote_build.sh:"
-          cat ./remote_build.sh
         shell: pwsh
       - name: Run build script
         run: ./remote_build.sh
