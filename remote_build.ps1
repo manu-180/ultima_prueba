@@ -19,6 +19,10 @@ reflex init
 Write-Host "Exportando reflex frontend"
 reflex export --frontend-only
 
+# Listar archivos en el directorio actual para depuración
+Write-Host "Listando archivos en el directorio actual después de reflex export"
+Get-ChildItem
+
 # Eliminar el directorio public si existe
 Write-Host "Removiendo public directory"
 Remove-Item -Recurse -Force public
@@ -27,13 +31,18 @@ Remove-Item -Recurse -Force public
 Write-Host "Creando public directory"
 New-Item -ItemType Directory -Path public
 
-# Extraer el contenido de frontend.zip a public
-Write-Host "Extrayendo frontend.zip to public"
-Expand-Archive -Path frontend.zip -DestinationPath public
-
-# Eliminar el archivo frontend.zip
-Write-Host "Removiendo frontend.zip"
-Remove-Item -Force frontend.zip
+# Verificar si frontend.zip existe
+if (Test-Path -Path frontend.zip) {
+    Write-Host "frontend.zip encontrado, extrayendo archivos"
+    # Extraer el contenido de frontend.zip a public
+    Expand-Archive -Path frontend.zip -DestinationPath public
+    # Eliminar el archivo frontend.zip
+    Write-Host "Removiendo frontend.zip"
+    Remove-Item -Force frontend.zip
+} else {
+    Write-Host "frontend.zip no encontrado, abortando"
+    exit 1
+}
 
 # Añadir cambios a git
 Write-Host "Adding changes to git"
