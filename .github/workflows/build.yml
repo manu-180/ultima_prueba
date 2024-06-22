@@ -23,9 +23,19 @@ jobs:
       - name: Set PowerShell Execution Policy
         run: Set-ExecutionPolicy RemoteSigned -Scope Process
         shell: pwsh
+      - name: Debugging
+        run: |
+          ls -al    # Lista todos los archivos y directorios en detalle
+          ls -al public    # Lista contenido específico (por ejemplo, el directorio "public")
+          ls -al .    # Lista todos los archivos y directorios incluidos los ocultos
       - name: Run build script
         run: ./remote_build.ps1
         shell: pwsh
+        - name: Debugging2
+        run: |
+          ls -al    # Lista todos los archivos y directorios en detalle
+          ls -al public    # Lista contenido específico (por ejemplo, el directorio "public")
+          ls -al .    # Lista todos los archivos y directorios incluidos los ocultos
       - name: Commit and Push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
