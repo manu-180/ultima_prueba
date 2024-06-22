@@ -1,45 +1,28 @@
-name: automatizacion
+name: CI/CD Pipeline
 
-on:
-  push:
-    branches:
-      - main
-  schedule:
-    - cron: '*/6 * * * *' 
+on: [push]
 
 jobs:
   build:
-    if: github.repository == 'manu-180/ultima_prueba'
     runs-on: windows-latest
-    permissions:
-      contents: write
+
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Set PowerShell Execution Policy
-        run: Set-ExecutionPolicy RemoteSigned -Scope Process
-        shell: pwsh
-      - name: Debugging
-        run: |
-          ls -al    # Lista todos los archivos y directorios en detalle
-          ls -al public    # Lista contenido específico (por ejemplo, el directorio "public")
-          ls -al .    # Lista todos los archivos y directorios incluidos los ocultos
-      - name: Run build script
-        run: ./remote_build.ps1
-        shell: pwsh
-        - name: Debugging2
-        run: |
-          ls -al    # Lista todos los archivos y directorios en detalle
-          ls -al public    # Lista contenido específico (por ejemplo, el directorio "public")
-          ls -al .    # Lista todos los archivos y directorios incluidos los ocultos
-      - name: Commit and Push changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: Update static build
-          commit_user_name: Manuel Navarro [GitHub Actions]
-          commit_user_email: manumanu97@hotmail.com
-          commit_author: manunv <manumanu97@hotmail.com>
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: List directory before running script
+      run: Get-ChildItem -Path . -Recurse
+      shell: pwsh
+
+    - name: Run remote build script
+      run: ./remote_build.ps1
+      shell: pwsh
+
+    - name: List directory after running script
+      run: Get-ChildItem -Path . -Recurse
+      shell: pwsh
