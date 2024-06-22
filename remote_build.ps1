@@ -17,15 +17,41 @@ reflex init
 
 # Exportar solo el frontend de reflex
 Write-Host "Exportando reflex frontend"
-try {
-    $exportOutput = reflex export --frontend-only 2>&1
-    Write-Host "Salida de reflex export:"
-    Write-Host $exportOutput
-} catch {
-    Write-Host "Error durante la exportación de reflex:"
-    Write-Host $_
+reflex export --frontend-only
+
+# Listar archivos en el directorio actual para depuración
+Write-Host "Listando archivos en el directorio actual después de reflex export"
+Get-ChildItem
+
+# Eliminar el directorio public si existe
+Write-Host "Removiendo public directory"
+Remove-Item -Recurse -Force public
+
+# Crear un nuevo directorio public
+Write-Host "Creando public directory"
+New-Item -ItemType Directory -Path public
+
+# Verificar si frontend.zip existe
+if (Test-Path -Path frontend.zip) {
+    Write-Host "frontend.zip encontrado, extrayendo archivos"
+    # Extraer el contenido de frontend.zip a public
+    Expand-Archive -Path frontend.zip -DestinationPath public
+    # Eliminar el archivo frontend.zip
+    Write-Host "Removiendo frontend.zip"
+    Remove-Item -Force frontend.zip
+} else {
+    Write-Host "frontend.zip no encontrado, abortando"
     exit 1
 }
 
-# Listar archivos en el directorio actual para depuración después de reflex export
-Write-Host "Listando archivos en el"
+# Añadir cambios a git
+Write-Host "Adding changes to git"
+git add .
+
+# Hacer commit de los cambios
+Write-Host "Committing changes"
+git commit -m "Adjust workflow for Windows environment"
+
+# Hacer push de los cambios
+Write-Host "Pushing changes"
+git push
