@@ -1,7 +1,5 @@
-# Cambiar la política de ejecución para permitir scripts en PowerShell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 
-# Activar entorno virtual de Python
+#!/usr/bin/env pwsh
 echo "Activando entorno virtual"
 py -3 -m venv .venv
 .\.venv\Scripts\Activate.ps1

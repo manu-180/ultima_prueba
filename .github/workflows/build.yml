@@ -20,8 +20,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Set PowerShell Execution Policy
+        run: Set-ExecutionPolicy RemoteSigned -Scope Process
+        shell: pwsh
       - name: Run build script
         run: ./remote_build.sh
+        shell: pwsh
       - name: Commit and Push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
