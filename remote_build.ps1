@@ -23,26 +23,26 @@ reflex export --frontend-only
 Write-Host "Listando archivos en el directorio actual después de reflex export"
 Get-ChildItem
 
-# Eliminar el directorio public si existe
-Write-Host "Removiendo public directory"
-Remove-Item -Recurse -Force public
+# # Eliminar el directorio public si existe
+# Write-Host "Removiendo public directory"
+# Remove-Item -Recurse -Force public
 
-# Crear un nuevo directorio public
-Write-Host "Creando public directory"
-New-Item -ItemType Directory -Path public
+# # Crear un nuevo directorio public
+# Write-Host "Creando public directory"
+# New-Item -ItemType Directory -Path public
 
-# Verificar si frontend.zip existe
-if (Test-Path -Path frontend.zip) {
-    Write-Host "frontend.zip encontrado, extrayendo archivos"
-    # Extraer el contenido de frontend.zip a public
-    Expand-Archive -Path frontend.zip -DestinationPath public
-    # Eliminar el archivo frontend.zip
-    Write-Host "Removiendo frontend.zip"
-    Remove-Item -Force frontend.zip
-} else {
-    Write-Host "frontend.zip no encontrado, abortando"
-    exit 1
-}
+# # Verificar si frontend.zip existe
+# if (Test-Path -Path frontend.zip) {
+#     Write-Host "frontend.zip encontrado, extrayendo archivos"
+#     # Extraer el contenido de frontend.zip a public
+#     Expand-Archive -Path frontend.zip -DestinationPath public
+#     # Eliminar el archivo frontend.zip
+#     Write-Host "Removiendo frontend.zip"
+#     Remove-Item -Force frontend.zip
+# } else {
+#     Write-Host "frontend.zip no encontrado, abortando"
+#     exit 1
+# }
 
 # Añadir cambios a git
 Write-Host "Adding changes to git"
