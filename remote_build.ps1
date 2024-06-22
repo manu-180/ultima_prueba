@@ -19,7 +19,7 @@ reflex init
 Write-Host "Exportando reflex frontend"
 reflex export --frontend-only
 
-# Listar archivos en el directorio actual para depuración
+# Listar archivos en el directorio actual para depuración antes de verificar el archivo
 Write-Host "Listando archivos en el directorio actual después de reflex export"
 Get-ChildItem
 
