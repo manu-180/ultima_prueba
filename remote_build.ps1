@@ -28,13 +28,13 @@ Get-ChildItem
 Write-Host "Listando archivos de manera recursiva después de reflex export"
 Get-ChildItem -Recurse
 
-# Verificar si cualquier archivo ZIP existe en el directorio actual
-Write-Host "Verificando la existencia de cualquier archivo ZIP en el directorio actual"
-$zipFile = Get-ChildItem -Recurse -Filter "*.zip" | Select-Object -First 1
+# Verificar si frontend.zip existe en cualquier parte del proyecto
+Write-Host "Verificando la existencia de frontend.zip en cualquier parte del proyecto"
+$zipFile = Get-ChildItem -Recurse -Filter "frontend.zip" | Select-Object -First 1
 if ($zipFile) {
-    Write-Host "Archivo ZIP encontrado: $($zipFile.FullName)"
+    Write-Host "frontend.zip encontrado en: $($zipFile.FullName)"
 } else {
-    Write-Host "Ningún archivo ZIP encontrado, abortando"
+    Write-Host "frontend.zip no encontrado, abortando"
     exit 1
 }
 
@@ -46,12 +46,12 @@ Remove-Item -Recurse -Force public
 Write-Host "Creando public directory"
 New-Item -ItemType Directory -Path public
 
-# Extraer el contenido del archivo ZIP encontrado a public
-Write-Host "Extrayendo archivos del archivo ZIP encontrado"
+# Extraer el contenido de frontend.zip a public
+Write-Host "Extrayendo archivos de frontend.zip a public"
 Expand-Archive -Path $zipFile.FullName -DestinationPath public
 
-# Eliminar el archivo ZIP
-Write-Host "Removiendo el archivo ZIP"
+# Eliminar el archivo frontend.zip
+Write-Host "Removiendo frontend.zip"
 Remove-Item -Force $zipFile.FullName
 
 # Añadir cambios a git
