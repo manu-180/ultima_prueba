@@ -1,14 +1,15 @@
-name: Deploy to GitHub every 5 minutes
+name: automatizacion
 
 on:
   push:
     branches:
       - main
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/6 * * * *'
 
 jobs:
   build:
+    if: github.repository == 'manu-180/ultima_prueba'
     runs-on: windows-latest
     permissions:
       contents: write
@@ -19,22 +20,17 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Set up Git
+      - name: Set PowerShell Execution Policy
+        run: Set-ExecutionPolicy RemoteSigned -Scope Process
+        shell: pwsh
+      - name: Set up Git user
         run: |
-          git config --local user.email "manunv97@gmail.com"
-          git config --local user.name "Manuel"
-
-      - name: Add changes to Git
-        run: |
-          git add .
-
-      - name: Check for changes and commit
-        run: |
-          git commit -m "cambios"
-        - name: haciendo push
-        run: |
-          git push
+          git config --global user.email "manunv97@gmail.com"
+          git config --global user.name "Manuel"
+        shell: pwsh
+      - name: Run build script
+        run: ./remote_build.ps1
+        shell: pwsh
       - name: Commit and Push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
