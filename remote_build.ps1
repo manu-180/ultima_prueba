@@ -1,7 +1,7 @@
 # Activar entorno virtual de Python
-Write-Host "Activando entorno virtual"
-py -3 -m venv .venv
-.\.venv\Scripts\Activate.ps1
+# Write-Host "Activando entorno virtual"
+# py -3 -m venv .venv
+# .\.venv\Scripts\Activate.ps1
 
 # Actualizar pip
 Write-Host "Actualizando pip"
