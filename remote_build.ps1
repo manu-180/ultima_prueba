@@ -15,9 +15,10 @@ pip install -r "requirements.txt"
 Write-Host "Inicializando reflex"
 reflex init
 
-# Exportar solo el frontend de reflex
+# Exportar solo el frontend de reflex y capturar la salida
 Write-Host "Exportando reflex frontend"
-reflex export --frontend-only
+$exportOutput = reflex export --frontend-only 2>&1
+Write-Host $exportOutput
 
 # Listar archivos en el directorio actual para depuración
 Write-Host "Listando archivos en el directorio actual después de reflex export"
@@ -27,19 +28,14 @@ Get-ChildItem
 Write-Host "Listando archivos de manera recursiva después de reflex export"
 Get-ChildItem -Recurse
 
-# Verificar si frontend.zip existe en el directorio actual
-Write-Host "Verificando la existencia de frontend.zip en el directorio actual"
-if (Test-Path -Path "./frontend.zip") {
-    Write-Host "frontend.zip encontrado en el directorio actual"
+# Verificar si cualquier archivo ZIP existe en el directorio actual
+Write-Host "Verificando la existencia de cualquier archivo ZIP en el directorio actual"
+$zipFile = Get-ChildItem -Recurse -Filter "*.zip" | Select-Object -First 1
+if ($zipFile) {
+    Write-Host "Archivo ZIP encontrado: $($zipFile.FullName)"
 } else {
-    Write-Host "frontend.zip no encontrado en el directorio actual, buscando en subdirectorios"
-    $zipFile = Get-ChildItem -Recurse -Filter "frontend.zip" | Select-Object -First 1
-    if ($zipFile) {
-        Write-Host "frontend.zip encontrado en: $($zipFile.FullName)"
-    } else {
-        Write-Host "frontend.zip no encontrado, abortando"
-        exit 1
-    }
+    Write-Host "Ningún archivo ZIP encontrado, abortando"
+    exit 1
 }
 
 # Eliminar el directorio public si existe
@@ -50,21 +46,13 @@ Remove-Item -Recurse -Force public
 Write-Host "Creando public directory"
 New-Item -ItemType Directory -Path public
 
-# Verificar si frontend.zip existe y extraerlo
-if (Test-Path -Path "./frontend.zip") {
-    Write-Host "frontend.zip encontrado, extrayendo archivos"
-    # Extraer el contenido de frontend.zip a public
-    Expand-Archive -Path "./frontend.zip" -DestinationPath public
-    # Eliminar el archivo frontend.zip
-    Write-Host "Removiendo frontend.zip"
-    Remove-Item -Force "./frontend.zip"
-} else {
-    Write-Host "frontend.zip no encontrado en el directorio actual, utilizando la ubicación encontrada anteriormente"
-    Expand-Archive -Path $zipFile.FullName -DestinationPath public
-    # Eliminar el archivo frontend.zip
-    Write-Host "Removiendo frontend.zip"
-    Remove-Item -Force $zipFile.FullName
-}
+# Extraer el contenido del archivo ZIP encontrado a public
+Write-Host "Extrayendo archivos del archivo ZIP encontrado"
+Expand-Archive -Path $zipFile.FullName -DestinationPath public
+
+# Eliminar el archivo ZIP
+Write-Host "Removiendo el archivo ZIP"
+Remove-Item -Force $zipFile.FullName
 
 # Añadir cambios a git
 Write-Host "Adding changes to git"
