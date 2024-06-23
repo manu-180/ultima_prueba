@@ -15,12 +15,17 @@ pip install -r "requirements.txt"
 Write-Host "Inicializando reflex"
 reflex init
 
+# Listar archivos en el directorio actual antes de exportar
+Write-Host "Listando archivos en el directorio actual antes de reflex export"
+Get-ChildItem
+
 # Exportar solo el frontend de reflex y capturar la salida
 Write-Host "Exportando reflex frontend"
 $exportOutput = & { reflex export --frontend-only } 2>&1
+Write-Host "Salida de reflex export:"
 Write-Host $exportOutput
 
-# Listar archivos en el directorio actual para depuración
+# Listar archivos en el directorio actual después de exportar
 Write-Host "Listando archivos en el directorio actual después de reflex export"
 Get-ChildItem
 
