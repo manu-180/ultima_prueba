@@ -65,7 +65,7 @@ git add .
 
 # Hacer commit de los cambios
 Write-Host "Committing changes"
-git commit -m "Update static build"
+git commit -m "cambios remotos"
 
 # Hacer push de los cambios
 Write-Host "Pushing changes"

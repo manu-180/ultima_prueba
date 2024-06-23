@@ -1,32 +1,33 @@
-name: automatizacion
+name: Deploy to GitHub every 5 minutes
 
 on:
-  push:
-    branches:
-      - main
   schedule:
-    - cron: '*/6 * * * *'
+    - cron: '*/5 * * * *'  # Ejecutar cada 5 minutos
 
 jobs:
-  build:
-    runs-on: windows-latest
-    permissions:
-      contents: write
+  deploy:
+    runs-on: windows-latest  # Usar el último sistema operativo Windows disponible
+
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Set PowerShell Execution Policy
-        run: Set-ExecutionPolicy RemoteSigned -Scope Process
-        shell: pwsh
-      - name: Set up Git user
+      - name: Checkout repository
+        uses: actions/checkout@v4  # Esta acción permite clonar el repositorio
+
+      - name: Set up Git
         run: |
-          git config --global user.email "manunv97@gmail.com"
-          git config --global user.name "Manuel"
-        shell: pwsh
-      - name: Run build script
-        run: ./remote_build.ps1
-        shell: pwsh
+          git config --local user.email "manunv97@gmail.com"
+          git config --local user.name "Manuel"
+
+      - name: Add changes to git
+        run: |
+          echo "Adding changes to git"
+          git add .
+
+      - name: Commit changes
+        run: |
+          echo "Committing changes"
+          git commit -m "Committing changes from GitHub Actions"
+
+      - name: Push changes to GitHub
+        run: |
+          echo "Pushing changes"
+          git push origin HEAD:main  # Cambia 'main' por tu rama principal si es diferente
