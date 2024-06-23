@@ -17,7 +17,7 @@ reflex init
 
 # Configurar variable de entorno API_URL
 Write-Host "Configurando variable de entorno API_URL"
-$env:API_URL = "https://api.baackend.com"
+Set-Item Env:API_URL "https://api.baackend.com"
 
 # Exportar solo el frontend de reflex y capturar la salida
 Write-Host "Exportando reflex frontend"
@@ -25,9 +25,13 @@ $exportOutput = & reflex export --frontend-only 2>&1
 Write-Host "Salida de reflex export:"
 Write-Host $exportOutput
 
-# Verificar si frontend.zip se ha creado en el directorio raíz del proyecto
-Write-Host "Listando archivos en el directorio raíz después de reflex export"
-Get-ChildItem -Path . -Filter "frontend.zip"
+# Desactivar entorno virtual
+Write-Host "Desactivando entorno virtual"
+deactivate
+
+# Listar archivos en el directorio actual después de exportar
+Write-Host "Listando archivos en el directorio actual después de reflex export"
+Get-ChildItem
 
 # Verificar si frontend.zip existe en cualquier parte del proyecto
 Write-Host "Verificando la existencia de frontend.zip en cualquier parte del proyecto"
@@ -51,4 +55,18 @@ New-Item -ItemType Directory -Path public
 Write-Host "Extrayendo archivos de frontend.zip a public"
 Expand-Archive -Path $zipFile.FullName -DestinationPath public
 
-# El
+# Eliminar el archivo frontend.zip
+Write-Host "Removiendo frontend.zip"
+Remove-Item -Force $zipFile.FullName
+
+# Añadir cambios a git
+Write-Host "Adding changes to git"
+git add .
+
+# Hacer commit de los cambios
+Write-Host "Committing changes"
+git commit -m "Update static build"
+
+# Hacer push de los cambios
+Write-Host "Pushing changes"
+git push
