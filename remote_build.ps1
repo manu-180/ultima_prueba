@@ -23,35 +23,35 @@ reflex export --frontend-only
 Write-Host "Listando archivos en el directorio actual después de reflex export"
 Get-ChildItem
 
-# Verificar si frontend.zip existe en el directorio actual
-Write-Host "Verificando la existencia de frontend.zip en el directorio actual"
-if (Test-Path -Path "./frontend.zip") {
-    Write-Host "frontend.zip encontrado en el directorio actual"
-} else {
-    Write-Host "frontend.zip no encontrado en el directorio actual, buscando en subdirectorios"
-    Get-ChildItem -Recurse -Filter "frontend.zip"
-}
+# # Verificar si frontend.zip existe en el directorio actual
+# Write-Host "Verificando la existencia de frontend.zip en el directorio actual"
+# if (Test-Path -Path "./frontend.zip") {
+#     Write-Host "frontend.zip encontrado en el directorio actual"
+# } else {
+#     Write-Host "frontend.zip no encontrado en el directorio actual, buscando en subdirectorios"
+#     Get-ChildItem -Recurse -Filter "frontend.zip"
+# }
 
-# Eliminar el directorio public si existe
-Write-Host "Removiendo public directory"
-Remove-Item -Recurse -Force public
+# # Eliminar el directorio public si existe
+# Write-Host "Removiendo public directory"
+# Remove-Item -Recurse -Force public
 
-# Crear un nuevo directorio public
-Write-Host "Creando public directory"
-New-Item -ItemType Directory -Path public
+# # Crear un nuevo directorio public
+# Write-Host "Creando public directory"
+# New-Item -ItemType Directory -Path public
 
-# Verificar si frontend.zip existe y extraerlo
-if (Test-Path -Path "./frontend.zip") {
-    Write-Host "frontend.zip encontrado, extrayendo archivos"
-    # Extraer el contenido de frontend.zip a public
-    Expand-Archive -Path "./frontend.zip" -DestinationPath public
-    # Eliminar el archivo frontend.zip
-    Write-Host "Removiendo frontend.zip"
-    Remove-Item -Force "./frontend.zip"
-} else {
-    Write-Host "frontend.zip no encontrado, abortando"
-    exit 1
-}
+# # Verificar si frontend.zip existe y extraerlo
+# if (Test-Path -Path "./frontend.zip") {
+#     Write-Host "frontend.zip encontrado, extrayendo archivos"
+#     # Extraer el contenido de frontend.zip a public
+#     Expand-Archive -Path "./frontend.zip" -DestinationPath public
+#     # Eliminar el archivo frontend.zip
+#     Write-Host "Removiendo frontend.zip"
+#     Remove-Item -Force "./frontend.zip"
+# } else {
+#     Write-Host "frontend.zip no encontrado, abortando"
+#     exit 1
+# }
 
 # Añadir cambios a git
 Write-Host "Adding changes to git"
