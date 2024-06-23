@@ -9,7 +9,6 @@ on:
 
 jobs:
   build:
-    if: github.repository == 'manu-180/ultima_prueba'
     runs-on: windows-latest
     permissions:
       contents: write
