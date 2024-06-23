@@ -5,7 +5,8 @@ import asyncio
 import requests as rq
 import smtplib
 import http.cookies
-from firebase_admin import auth, db, credentials
+from google.cloud import firestore
+from firebase_admin import auth, credentials
 from email.mime.text import MIMEText
 from dotenv import load_dotenv
 
@@ -25,11 +26,9 @@ class Horarios(rx.Base):
 
 load_dotenv()
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
 GOOGLE_APPLICATION_CREDENTIALS = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
-
-firebase_sdk = credentials.Certificate(GOOGLE_APPLICATION_CREDENTIALS)
-firebase_admin.initialize_app(firebase_sdk, {"databaseURL": DATABASE_URL})
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GOOGLE_APPLICATION_CREDENTIALS
+db = firestore.Client()
 
 class CookieState:
 
@@ -42,6 +41,130 @@ class CookieState:
             
 cookie_state = CookieState()
 
+class FirestoreDB:
+    def __init__(self):
+        self.ref = db.collection("Horarios")
+
+    def get_data(self):
+        docs = self.ref.stream()
+        for doc in docs:
+            print(f"{doc.id} => {doc.to_dict()}")
+
+    def get_horarios(self):
+        horarios = []
+        docs = self.ref.stream()
+        for doc in docs:
+            data = doc.to_dict()
+            horarios.append(data)
+        return horarios
+
+    def get_cant_users(self, dia, hora):
+        doc_ref = self.ref.document(dia)
+        doc = doc_ref.get()
+        if doc.exists:
+            data = doc.to_dict()
+            if hora in data:
+                return len(data[hora])
+        return 0
+
+    def check_cant_users(self, dia, hora):
+        return self.get_cant_users(dia, hora) < 4
+
+    def agregar_usuario_a_horario(self, dia, hora, email):
+        doc_ref = self.ref.document(dia)
+        doc = doc_ref.get()
+        if doc.exists:
+            data = doc.to_dict()
+            if hora in data:
+                if email not in data[hora] and len(data[hora]) < 4:
+                    data[hora].append(email)
+                else:
+                    print("La clase está llena o el usuario ya está registrado.")
+            else:
+                data[hora] = [email]
+            doc_ref.set(data)
+        else:
+            doc_ref.set({hora: [email]})
+
+    def eliminar_usuario_de_horario(self, dia, hora, email):
+        doc_ref = self.ref.document(dia)
+        doc = doc_ref.get()
+        if doc.exists:
+            data = doc.to_dict()
+            if hora in data:
+                if email in data[hora]:
+                    data[hora].remove(email)
+                    doc_ref.set(data)
+                else:
+                    print("El usuario no está en la clase.")
+            else:
+                print("La hora no está registrada.")
+        else:
+            print("El día no está registrado.")
+
+    def encontrar_usuario(self, email):
+        horarios = []
+        docs = self.ref.stream()
+        for doc in docs:
+            data = doc.to_dict()
+            for hora, usuarios in data.items():
+                if email in usuarios:
+                    horarios.append(f"{doc.id} a las {hora}")
+        return horarios
+
+
+class Login:
+    def create_user(self, email, password):
+        try:
+            user = auth.create_user(email=email, password=password)
+            link = auth.generate_email_verification_link(email)
+            self.send_verification_email(email, link)
+            print('Usuario creado exitosamente')
+        except Exception as e:
+            print(f'Error creando usuario: {e}')
+
+    def send_verification_email(self, email, link):
+        EMAIL = os.getenv('EMAIL')
+        PASSWORD = os.getenv('PASSWORD')
+
+        msg = MIMEText(f'Para entrar a la mejor clase de cerámica verifica tu usuario clickeando este link: {link}')
+        msg['Subject'] = 'Verificación de Email'
+        msg['From'] = EMAIL
+        msg['To'] = email
+
+        with smtplib.SMTP('smtp.office365.com', 587) as server:
+            server.starttls()
+            server.login(EMAIL, PASSWORD)
+            server.send_message(msg)
+
+    def sign_in_with_email_and_password(self, email, password):
+        API_KEY = os.getenv("API_KEY")
+        url = f'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={API_KEY}'
+        payload = {'email': email, 'password': password, 'returnSecureToken': True}
+        response = rq.post(url, json=payload)
+        data = response.json()
+
+        if 'idToken' in data:
+            print('Inicio de sesión exitoso')
+            return data['idToken']
+        else:
+            print(f'Error al iniciar sesión: {data.get("error", {}).get("message")}')
+            return None
+
+    def get_user_data(self, id_token):
+        try:
+            decoded_token = auth.verify_id_token(id_token)
+            uid = decoded_token['uid']
+            user = auth.get_user(uid)
+            return user.email
+        except Exception as e:
+            print(f'Error obteniendo datos del usuario: {e}')
+            return None
+
+
+# Ejemplo de uso
+firebase_db = FirestoreDB()
+firebase_db.get_data()
 
 class FireBase():
     ref = db.reference("/Horarios/")
@@ -955,4 +1078,4 @@ app.add_page(mis_horarios)
 
 # if name == "main":
 #     asyncio.run(main())
-#PasdfPP"""
+#aaaa"""

@@ -3,3 +3,4 @@ firebase-admin
 requests
 python-dotenv
 websockets
+google-cloud-firestore
