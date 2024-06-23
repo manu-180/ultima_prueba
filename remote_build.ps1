@@ -17,7 +17,7 @@ reflex init
 
 # Exportar solo el frontend de reflex y capturar la salida
 Write-Host "Exportando reflex frontend"
-$exportOutput = reflex export --frontend-only 2>&1
+reflex export --frontend-only 
 Write-Host $exportOutput
 
 # # Listar archivos en el directorio actual para depuración
