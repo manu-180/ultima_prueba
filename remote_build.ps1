@@ -1,7 +1,7 @@
 # Activar entorno virtual de Python
-# Write-Host "Activando entorno virtual"
-# py -3 -m venv .venv
-# .\.venv\Scripts\Activate.ps1
+Write-Host "Activando entorno virtual"
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1
 
 # Actualizar pip
 Write-Host "Actualizando pip"
@@ -17,7 +17,7 @@ reflex init
 
 # Exportar solo el frontend de reflex y capturar la salida
 Write-Host "Exportando reflex frontend"
-reflex export --frontend-only 
+reflex export --frontend-only 2>&1
 Write-Host $exportOutput
 
 # # Listar archivos en el directorio actual para depuración
