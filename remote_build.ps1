@@ -25,9 +25,13 @@ $exportOutput = & reflex export --frontend-only 2>&1
 Write-Host "Salida de reflex export:"
 Write-Host $exportOutput
 
-# Verificar si frontend.zip se ha creado en el directorio raíz del proyecto
+# Verificar y listar archivos en el directorio raíz después de reflex export
 Write-Host "Listando archivos en el directorio raíz después de reflex export"
 Get-ChildItem -Path . -Filter "frontend.zip"
+
+# Listar todos los archivos y directorios en el proyecto después de reflex export
+Write-Host "Listando todos los archivos y directorios después de reflex export"
+Get-ChildItem -Recurse | ForEach-Object { Write-Host $_.FullName }
 
 # Verificar si frontend.zip existe en cualquier parte del proyecto
 Write-Host "Verificando la existencia de frontend.zip en cualquier parte del proyecto"
