@@ -1,40 +1,40 @@
-name: automatizacion
+# name: automatizacion
 
-on:
-  push:
-    branches:
-      - main
-  schedule:
-    - cron: '*/5 * * * *'
+# on:
+#   push:
+#     branches:
+#       - main
+#   schedule:
+#     - cron: '*/5 * * * *'
 
-jobs:
-  build:
-    if: github.repository == 'manu-180/ultima_prueba'
-    runs-on: windows-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Set PowerShell Execution Policy
-        run: Set-ExecutionPolicy RemoteSigned -Scope Process
-        shell: pwsh
-      - name: Set up Git user
-        run: |
-          git config --global user.email "manunv97@gmail.com"
-          git config --global user.name "Manuel"
-        shell: pwsh
-      - name: Run build script
-        run: ./remote_build.ps1
-        shell: pwsh
-      - name: Commit and Push changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: Update static build
-          commit_user_name: Manuel Navarro [GitHub Actions]
-          commit_user_email: manunv97@gmail.com
-          commit_author: manunv <manunv97@gmail.com>
+# jobs:
+#   build:
+#     if: github.repository == 'manu-180/ultima_prueba'
+#     runs-on: windows-latest
+#     permissions:
+#       contents: write
+#     steps:
+#       - name: Checkout repo
+#         uses: actions/checkout@v4
+#       - name: Setup Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: '3.11'
+#       - name: Set PowerShell Execution Policy
+#         run: Set-ExecutionPolicy RemoteSigned -Scope Process
+#         shell: pwsh
+#       - name: Set up Git user
+#         run: |
+#           git config --global user.email "manunv97@gmail.com"
+#           git config --global user.name "Manuel"
+#         shell: pwsh
+#       - name: Run build script
+#         run: ./remote_build.ps1
+#         shell: pwsh
+#       - name: Commit and Push changes
+#         uses: stefanzweifel/git-auto-commit-action@v5
+#         with:
+#           commit_message: Update static build
+#           commit_user_name: Manuel Navarro [GitHub Actions]
+#           commit_user_email: manunv97@gmail.com
+#           commit_author: manunv <manunv97@gmail.com>
