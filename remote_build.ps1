@@ -20,23 +20,23 @@ Write-Host "Exportando reflex frontend"
 reflex export --frontend-only 2>&1
 Write-Host $exportOutput
 
-# Listar archivos en el directorio actual para depuración
-Write-Host "Listando archivos en el directorio actual después de reflex export"
-Get-ChildItem
+# # Listar archivos en el directorio actual para depuración
+# Write-Host "Listando archivos en el directorio actual después de reflex export"
+# Get-ChildItem
 
-# Listar archivos de manera recursiva para depuración
-Write-Host "Listando archivos de manera recursiva después de reflex export"
-Get-ChildItem -Recurse
+# # Listar archivos de manera recursiva para depuración
+# Write-Host "Listando archivos de manera recursiva después de reflex export"
+# Get-ChildItem -Recurse
 
-# Verificar si frontend.zip existe en cualquier parte del proyecto
-Write-Host "Verificando la existencia de frontend.zip en cualquier parte del proyecto"
-$zipFile = Get-ChildItem -Recurse -Filter "frontend.zip" | Select-Object -First 1
-if ($zipFile) {
-    Write-Host "frontend.zip encontrado en: $($zipFile.FullName)"
-} else {
-    Write-Host "frontend.zip no encontrado, abortando"
-    exit 1
-}
+# # Verificar si frontend.zip existe en cualquier parte del proyecto
+# Write-Host "Verificando la existencia de frontend.zip en cualquier parte del proyecto"
+# $zipFile = Get-ChildItem -Recurse -Filter "frontend.zip" | Select-Object -First 1
+# if ($zipFile) {
+#     Write-Host "frontend.zip encontrado en: $($zipFile.FullName)"
+# } else {
+#     Write-Host "frontend.zip no encontrado, abortando"
+#     exit 1
+# }
 
 # Eliminar el directorio public si existe
 Write-Host "Removiendo public directory"

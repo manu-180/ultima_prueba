@@ -867,8 +867,6 @@ def navbar(boton = False) -> rx.Component:
                     ),
                     href="/"
                 ),
-                rx.spacer(),
-                rx.link("prueba", href="/prueba"),
                 # turnos_button(),
                 desplegable_button(),
                 rx.spacer(),
