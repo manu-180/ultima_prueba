@@ -1,5 +1,7 @@
+cryptography==42.0.8
+firebase-admin==6.5.0
+grpcio-status==1.62.2
+httptools==0.6.1
+python-dotenv==1.0.1
+PyYAML==6.0.1
 reflex==0.5.3
-firebase-admin
-requests
-python-dotenv
-websockets
