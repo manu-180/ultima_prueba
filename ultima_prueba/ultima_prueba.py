@@ -48,6 +48,20 @@ cookie_state = CookieState()
 class FireBase():
     ref = db.reference("/Horarios/")
 
+    def obtener_fechas_proximas_semanas(self):
+        today = datetime.now()
+        
+        next_monday = today + timedelta(days=(7 - today.weekday() + 0) % 7)
+        fechas = []
+        for i in range(5):
+            lunes = next_monday + timedelta(weeks=i)
+            
+            for j in range(5):  # Solo lunes a viernes
+                fecha = lunes + timedelta(days=j)
+                fechas.append(fecha.strftime("%d/%m"))
+        
+        return fechas
+
     def data(self):
 
         class_data = []
@@ -64,8 +78,8 @@ class FireBase():
 
                 
             
-    def cant_users(self, dia, hora):
-        horario_ref = db.reference(f'/Horarios/dia/{dia}/')
+    def cant_users(self, semana, dia, hora):
+        horario_ref = db.reference(f'/Horarios/-O0QT9g3RXHZASIMvyfw/{semana}/dia/{dia}')
         cant_users = 0
         horarios_diccionario = horario_ref.get()
 
@@ -79,22 +93,23 @@ class FireBase():
                     cant_users = len(valor)
             return cant_users
         except:
+            print("funcion cant users")
             print(horarios_diccionario)
 
             
                         
 
-    def check_cant_users(self, dia, hora):
+    def check_cant_users(self, semana, dia, hora):
         try:
-            if self.cant_users( dia, hora) < 4:
+            if self.cant_users(semana, dia, hora) < 4:
                 return True
             else: return False
         except:
-            print(self.cant_users( dia, hora))
+            print(self.cant_users(semana, dia, hora))
 
-    def agregar_usuario_a_horario(self, dia, hora):
+    def agregar_usuario_a_horario(self, semana, dia, hora):
 
-        horario_ref = db.reference(f'/Horarios/dia/{dia}/')
+        horario_ref = db.reference(f'/Horarios/-O0QT9g3RXHZASIMvyfw/{semana}/dia/{dia}')
         horarios_diccionario = horario_ref.get()
         
         try:
@@ -102,7 +117,7 @@ class FireBase():
             usuarios = horarios_diccionario[hora]
             
             if cookie_state.cookie not in usuarios:
-                if self.cant_users(dia, hora) < 4 :
+                if self.cant_users(semana, dia, hora) < 4 :
                     usuarios.append(cookie_state.cookie)
                 print("la clase esta llena")
             
@@ -110,15 +125,15 @@ class FireBase():
         except Exception as e:
             usuarios = list(horarios_diccionario[hora].values())
             if cookie_state.cookie not in usuarios:
-                if self.cant_users(dia, hora) < 4 :
+                if self.cant_users(semana , dia, hora) < 4 :
                     usuarios.append(cookie_state.cookie)
                 print("la clase esta llena")
             horario_ref.update({hora: usuarios})
 
 
 
-    def eliminar_usuario_a_horario(self, dia, hora, usuario):
-        usuarios_ref = db.reference(f'/Horarios/dia/{dia}/{hora}')
+    def eliminar_usuario_a_horario(self,semana, dia, hora, usuario):
+        usuarios_ref = db.reference(f'/Horarios/-O0QT9g3RXHZASIMvyfw/{semana}/dia/{dia}')
         usuarios_diccionario = usuarios_ref.get()
         try:
             lista_usuarios = usuarios_ref.get()
@@ -135,16 +150,6 @@ class FireBase():
                 print("raro")
     
 
-    def buscar_horario(self, id):
-        data = self.ref.get("-O-H_Za4uQ930lMYfNo6")
-        dict_data = data[0]
-        list_keys = list(dict_data.keys())
-        for index, i in enumerate(list_keys):
-            if index + 1 == id :
-                return i
-        
-    
-
     def get_user_data(self, id_token):
         try:
             decoded_token = auth.verify_id_token(id_token)
@@ -155,15 +160,21 @@ class FireBase():
             print('Error fetching user data:', e)
             return None, None
         
+
     def encontrar_usuario(self, user):
+        fechas = self.obtener_fechas_proximas_semanas()
         try:
-            horario_ref = db.reference(f'/Horarios/dia')
+            horario_ref = db.reference(f'/Horarios/-O0QT9g3RXHZASIMvyfw')
             horarios_diccionario = horario_ref.get()
+            index= 0
             horarios = []
-            for dia, horarios_diccionario in horarios_diccionario.items():            
-                for hora, usuarios in horarios_diccionario.items():
-                    if user in usuarios:
-                        horarios.append(f'{dia} a las {hora}')
+            for semana, data_dias_usuarios in horarios_diccionario.items():
+                for dias, dias_usuarios in data_dias_usuarios.items():
+                    for  dia, hora_usuarios in  dias_usuarios.items():
+                        for hora, usuarios in hora_usuarios.items():
+                            if user in usuarios:
+                                horarios.append(f'{semana},{dia},{fechas[index]},{hora}')
+                        index += 1
             return horarios
         except:
             print(horarios_diccionario)
@@ -172,7 +183,8 @@ class FireBase():
 
 firebase = FireBase()
 
-# firebase.agregar_usuario_a_horario("miercoles", "14:00" )
+#firebase.ref.push({"semana1": {'dia': {'lunes': {'17:30': ['jul1inv@gmail.com', 'reycamila04@gmail.com', 'ivannarisaro@hotmail.com', 'manumanu97@hotmail.com']}, 'martes': {'10:00': [None, None, None, 'reycamila04@gmail.com', 'skere@hotmail.com', 'ivannarisaro@hotmail.com'], '14:00': ['ju11linv@gmail.com', 'reycamila04@gmail.com', 'skere@hotmail.com', 'ivannarisaro@hotmail.com'], '16:30': ['j1ulinv@gmail.com', None, None, 'reycamila04@gmail.com', None, 'ivannarisaro@hotmail.com']}, 'miercoles': {'14:00': ['manumanu97@gmail.com', None, 'asdfasdf', 'ivannarisaro@hotmail.com'], '16:30': ['j1ulinv@gmail.com', None, None, None, 'skere@hotmail.com', 'ivannarisaro@hotmail.com'], '9:00': ['juli1nv@gmail.com', 'manumanu97@hotmail.com', 'skere@hotmail.com', 'ivannarisaro@hotmail.com']}, 'tjueves': {'10:00': {'0': 'julinv@gmail.com', '5': 'skere@hotmail.com', '6': 'ivannarisaro@hotmail.com'}, '14:00': {'1': 'julinv@gmail.com', '3': 'reycamila04@gmail.com', '6': 'ivannarisaro@hotmail.com'}, '16:30': [None, 'jul111inv@gmail.com', None, 'reycamila04@gmail.com', 'skere@hotmail.com']}, 'viernes': {'16:00': [None, 'skere@hotmail.com', None, 'reycamila04@gmail.com', 'ivannarisaro@hotmail.com'], '18:00': [None, None, 'skere@hotmail.com', 'manumanu97@hotmail.com', 'ivannarisaro@hotmail.com'], '9:00': [None, 'skere@hotmail.com', None, 'reycamila04@gmail.com', 'ivannarisaro@hotmail.com']}}},"semana2": {'dia': {'lunes': {'17:30': ['jul1inv@gmail.com', 'reycamila04@gmail.com', 'ivannarisaro@hotmail.com', 'manumanu97@hotmail.com']}, 'martes': {'10:00': [None, None, None, 'reycamila04@gmail.com', 'skere@hotmail.com', 'ivannarisaro@hotmail.com'], '14:00': ['ju11linv@gmail.com', 'reycamila04@gmail.com', 'skere@hotmail.com', 'ivannarisaro@hotmail.com'], '16:30': ['j1ulinv@gmail.com', None, None, 'reycamila04@gmail.com', None, 'ivannarisaro@hotmail.com']}, 'miercoles': {'14:00': ['manumanu97@gmail.com', None, 'asdfasdf', 'ivannarisaro@hotmail.com'], '16:30': ['j1ulinv@gmail.com', None, None, None, 'skere@hotmail.com', 'ivannarisaro@hotmail.com'], '9:00': ['juli1nv@gmail.com', 'manumanu97@hotmail.com', 'skere@hotmail.com', 'ivannarisaro@hotmail.com']}, 'tjueves': {'10:00': {'0': 'julinv@gmail.com', '5': 'skere@hotmail.com', '6': 'ivannarisaro@hotmail.com'}, '14:00': {'1': 'julinv@gmail.com', '3': 'reycamila04@gmail.com', '6': 'ivannarisaro@hotmail.com'}, '16:30': [None, 'jul111inv@gmail.com', None, 'reycamila04@gmail.com', 'skere@hotmail.com']}, 'viernes': {'16:00': [None, 'skere@hotmail.com', None, 'reycamila04@gmail.com', 'ivannarisaro@hotmail.com'], '18:00': [None, None, 'skere@hotmail.com', 'manumanu97@hotmail.com', 'ivannarisaro@hotmail.com'], '9:00': [None, 'skere@hotmail.com', None, 'reycamila04@gmail.com', 'ivannarisaro@hotmail.com']}}}, "semana3" : {'dia': {'lunes': {'17:30': ['jul1inv@gmail.com', 'reycamila04@gmail.com', 'ivannarisaro@hotmail.com', 'manumanu97@hotmail.com']}, 'martes': {'10:00': [None, None, None, 'reycamila04@gmail.com', 'skere@hotmail.com', 'ivannarisaro@hotmail.com'], '14:00': ['ju11linv@gmail.com', 'reycamila04@gmail.com', 'skere@hotmail.com', 'ivannarisaro@hotmail.com'], '16:30': ['j1ulinv@gmail.com', None, None, 'reycamila04@gmail.com', None, 'ivannarisaro@hotmail.com']}, 'miercoles': {'14:00': ['manumanu97@gmail.com', None, 'asdfasdf', 'ivannarisaro@hotmail.com'], '16:30': ['j1ulinv@gmail.com', None, None, None, 'skere@hotmail.com', 'ivannarisaro@hotmail.com'], '9:00': ['juli1nv@gmail.com', 'manumanu97@hotmail.com', 'skere@hotmail.com', 'ivannarisaro@hotmail.com']}, 'tjueves': {'10:00': {'0': 'julinv@gmail.com', '5': 'skere@hotmail.com', '6': 'ivannarisaro@hotmail.com'}, '14:00': {'1': 'julinv@gmail.com', '3': 'reycamila04@gmail.com', '6': 'ivannarisaro@hotmail.com'}, '16:30': [None, 'jul111inv@gmail.com', None, 'reycamila04@gmail.com', 'skere@hotmail.com']}, 'viernes': {'16:00': [None, 'skere@hotmail.com', None, 'reycamila04@gmail.com', 'ivannarisaro@hotmail.com'], '18:00': [None, None, 'skere@hotmail.com', 'manumanu97@hotmail.com', 'ivannarisaro@hotmail.com'], '9:00': [None, 'skere@hotmail.com', None, 'reycamila04@gmail.com', 'ivannarisaro@hotmail.com']}}}, "semana4" : {'dia': {'lunes': {'17:30': ['jul1inv@gmail.com', 'reycamila04@gmail.com', 'ivannarisaro@hotmail.com', 'manumanu97@hotmail.com']}, 'martes': {'10:00': [None, None, None, 'reycamila04@gmail.com', 'skere@hotmail.com', 'ivannarisaro@hotmail.com'], '14:00': ['ju11linv@gmail.com', 'reycamila04@gmail.com', 'skere@hotmail.com', 'ivannarisaro@hotmail.com'], '16:30': ['j1ulinv@gmail.com', None, None, 'reycamila04@gmail.com', None, 'ivannarisaro@hotmail.com']}, 'miercoles': {'14:00': ['manumanu97@gmail.com', None, 'asdfasdf', 'ivannarisaro@hotmail.com'], '16:30': ['j1ulinv@gmail.com', None, None, None, 'skere@hotmail.com', 'ivannarisaro@hotmail.com'], '9:00': ['juli1nv@gmail.com', 'manumanu97@hotmail.com', 'skere@hotmail.com', 'ivannarisaro@hotmail.com']}, 'tjueves': {'10:00': {'0': 'julinv@gmail.com', '5': 'skere@hotmail.com', '6': 'ivannarisaro@hotmail.com'}, '14:00': {'1': 'julinv@gmail.com', '3': 'reycamila04@gmail.com', '6': 'ivannarisaro@hotmail.com'}, '16:30': [None, 'jul111inv@gmail.com', None, 'reycamila04@gmail.com', 'skere@hotmail.com']}, 'viernes': {'16:00': [None, 'skere@hotmail.com', None, 'reycamila04@gmail.com', 'ivannarisaro@hotmail.com'], '18:00': [None, None, 'skere@hotmail.com', 'manumanu97@hotmail.com', 'ivannarisaro@hotmail.com'], '9:00': [None, 'skere@hotmail.com', None, 'reycamila04@gmail.com', 'ivannarisaro@hotmail.com']}}}, "semana5" : {'dia': {'lunes': {'17:30': ['jul1inv@gmail.com', 'reycamila04@gmail.com', 'ivannarisaro@hotmail.com', 'manumanu97@hotmail.com']}, 'martes': {'10:00': [None, None, None, 'reycamila04@gmail.com', 'skere@hotmail.com', 'ivannarisaro@hotmail.com'], '14:00': ['ju11linv@gmail.com', 'reycamila04@gmail.com', 'skere@hotmail.com', 'ivannarisaro@hotmail.com'], '16:30': ['j1ulinv@gmail.com', None, None, 'reycamila04@gmail.com', None, 'ivannarisaro@hotmail.com']}, 'miercoles': {'14:00': ['manumanu97@gmail.com', None, 'asdfasdf', 'ivannarisaro@hotmail.com'], '16:30': ['j1ulinv@gmail.com', None, None, None, 'skere@hotmail.com', 'ivannarisaro@hotmail.com'], '9:00': ['juli1nv@gmail.com', 'manumanu97@hotmail.com', 'skere@hotmail.com', 'ivannarisaro@hotmail.com']}, 'tjueves': {'10:00': {'0': 'julinv@gmail.com', '5': 'skere@hotmail.com', '6': 'ivannarisaro@hotmail.com'}, '14:00': {'1': 'julinv@gmail.com', '3': 'reycamila04@gmail.com', '6': 'ivannarisaro@hotmail.com'}, '16:30': [None, 'jul111inv@gmail.com', None, 'reycamila04@gmail.com', 'skere@hotmail.com']}, 'viernes': {'16:00': [None, 'skere@hotmail.com', None, 'reycamila04@gmail.com', 'ivannarisaro@hotmail.com'], '18:00': [None, None, 'skere@hotmail.com', 'manumanu97@hotmail.com', 'ivannarisaro@hotmail.com'], '9:00': [None, 'skere@hotmail.com', None, 'reycamila04@gmail.com', 'ivannarisaro@hotmail.com']}}}})
+
 
 class Login():
     def create_user(self, email, password):
@@ -309,19 +321,19 @@ class ReservaCancela(rx.State):
         print(data)
         return data
     
-    async def eliminar_usuario(self, dia, hora, usuario):
-        eliminar = eliminar_usuarioo(dia, hora, usuario)
+    async def eliminar_usuario(self, semana, dia, hora, usuario):
+        eliminar = eliminar_usuarioo(semana, dia, hora, usuario)
         return eliminar
 
-    async def agregar_usuario(self, dia, hora):
-        agregar = agregar_usuarioo(dia, hora)
+    async def agregar_usuario(self, semana, dia, hora):
+        agregar = agregar_usuarioo(semana,dia, hora)
         return agregar
     
-def eliminar_usuarioo( dia, hora, usuario):
-    firebase.eliminar_usuario_a_horario( dia, hora, usuario)
+def eliminar_usuarioo(semana, dia, hora, usuario):
+    firebase.eliminar_usuario_a_horario(semana, dia, hora, usuario)
 
-def agregar_usuarioo( dia, hora):
-    firebase.agregar_usuario_a_horario( dia, hora)
+def agregar_usuarioo(semana, dia, hora):
+    firebase.agregar_usuario_a_horario(semana, dia, hora)
 
 async def data():
     return firebase.data()
@@ -418,18 +430,12 @@ def ingreso() -> rx.Component:
 def turnos():
     return rx.box(
         rx.center(
-        rx.vstack(
-            navbar(),
-            rx.spacer(),
-            prueba(),
-            rx.spacer(),
-            rx.spacer(),
-            rx.spacer(),
-            mis_horarios_button(),
-            width= "100%",
-            align= "start"
-        ),
-    ),
+            rx.vstack(
+                navbar(),
+                prueba(),
+                width = "100%"
+            )
+        )
     )
 
 @rx.page(
@@ -438,13 +444,13 @@ def turnos():
         description="Taller de ceramica"
 )
 def mis_horarios():
-    horarios = firebase.encontrar_usuario("ivannarisaro@hotmail.com")
+    horarios = firebase.encontrar_usuario("asd")
 
     horarios_boxes = [
         rx.box(
             rx.hstack(
-            text_box(f"Tienes turno el día {horario}"),
-            eliminar_usuario_button(horario.split(' a las ')[0], horario.split(' a las ')[1], "ivannarisaro@hotmail.com")
+            text_box(f"Tienes turno el día {horario.split(',')[1], horario.split(',')[2]} a las {horario.split(',')[3]}"),
+            eliminar_usuario_button(horario.split(',')[0], horario.split(',')[1], horario.split(',')[2], "asd")
             )
         )
         for horario in horarios
@@ -463,25 +469,19 @@ def mis_horarios():
     )
 
 class PaginacionState(rx.State):
-    indice: int = 0  # Comienza en el primer componente
+    indice: int = 0  
 
     def siguiente(self):
-        self.indice = (self.indice + 1) % 4  
-        print(self.indice)
+        self.indice = (self.indice + 1) % 5
 
     def anterior(self):
-        self.indice = (self.indice - 1) % 4
-        print(self.indice)
+        self.indice = (self.indice - 1) % 5
 
 
 def prueba():
 
     return rx.center(
         rx.vstack(
-            rx.hstack(
-                rx.button(rx.icon("arrow-left", color = "black"), on_click=PaginacionState.anterior, style= {"background_color": "#FFFDF4"}),
-                rx.button(rx.icon("arrow-right", color = "black"), on_click=PaginacionState.siguiente, style= {"background_color": "#FFFDF4"}),
-            ),
             rx.flex(
                 rx.cond(
                 PaginacionState.indice == 0,
@@ -510,7 +510,20 @@ def prueba():
                 ),
                 align="start"
             ),
-            width = "100%"
+            rx.flex(
+                rx.cond(
+                PaginacionState.indice == 4,
+                links_button5()
+                ),
+                align="start"
+            ),
+            rx.hstack(
+                rx.button(rx.icon("arrow-left", color = "black"), on_click=PaginacionState.anterior, style= {"background_color": "#FFFDF4"}),
+                rx.button(rx.icon("arrow-right", color = "black"), on_click=PaginacionState.siguiente, style= {"background_color": "#FFFDF4"}),
+            ),
+            width = "100%",
+            # padding_left = "3em",
+            # padding_top = "3em"
         ),
     )
 
@@ -565,8 +578,7 @@ def links_button1():
     day_button_miercoles1(),
     day_button_jueves1(),
     day_button_viernes1(),
-    spacing="2" ,
-    padding_top = "40px"
+    spacing="2" 
     )
 
 def links_button2():
@@ -576,8 +588,7 @@ def links_button2():
     day_button_miercoles2(),
     day_button_jueves2(),
     day_button_viernes2(),
-    spacing="2" ,
-    padding_top = "40px"
+    spacing="2" 
     )
 
 def links_button3():
@@ -587,8 +598,7 @@ def links_button3():
     day_button_miercoles3(),
     day_button_jueves3(),
     day_button_viernes3(),
-    spacing="2" ,
-    padding_top = "40px"
+    spacing="2" 
     )
 
 def links_button4():
@@ -598,15 +608,24 @@ def links_button4():
     day_button_miercoles4(),
     day_button_jueves4(),
     day_button_viernes4(),
-    spacing="2" ,
-    padding_top = "40px"
+    spacing="2" 
+    )
+
+def links_button5():
+    return rx.vstack(
+    day_button_lunes5(),
+    day_button_martes5(),
+    day_button_miercoles5(),
+    day_button_jueves5(),
+    day_button_viernes5(),
+    spacing="2" 
     )
 
 def button_print_cookie():
     return rx.center(
         rx.button(
             rx.text("print cookie"),
-            width = "12em",
+            width = "13em",
             style= {
                     "background_color": "#383956",
                     "_hover": {
@@ -617,24 +636,24 @@ def button_print_cookie():
         )
     )
 
-def button_agregar_clase(dia, hora, fecha ):
+def button_agregar_clase(semana, dia, hora, fecha ):
+    
     return rx.center(
-        # rx.cond(
-        #     firebase.check_cant_users(dia, hora),
-            button_green(dia, hora, fecha),
-        #     button_disabled(hora),
-        # )
+        rx.cond(
+            firebase.check_cant_users(semana, dia, hora),
+            button_green(semana, dia, hora, fecha),
+            button_disabled(hora),
+        )
     )
 
-def button_green(dia, hora, fecha) -> rx.Component:
+def button_green(semana, dia, hora, fecha) -> rx.Component:
     return rx.button(
         rx.text(f"turno del {fecha} las {hora}"),
-        on_click=ReservaCancela.agregar_usuario(dia, hora),
+        on_click=ReservaCancela.agregar_usuario(semana, dia, hora),
         color_scheme=color.color_green,
-        width="12em",
+        width="13em",
     )
     
-
 
 
 def button_disabled( hora) -> rx.Component:
@@ -642,16 +661,16 @@ def button_disabled( hora) -> rx.Component:
         rx.button(
             rx.text(f"turno de las {hora}"),
             disabled=True,
-            width = "12em"
+            width = "13em"
         )
     )
 
-def eliminar_usuario_button(dia, hora, usuario):
+def eliminar_usuario_button(semana, dia, hora, usuario):
     return rx.button(
         rx.text("Cancelar turno"),
-        on_click=ReservaCancela.eliminar_usuario(dia, hora, usuario),
+        on_click=ReservaCancela.eliminar_usuario(semana, dia, hora, usuario),
         color_scheme= color.color_red,
-        width = "12em"
+        width = "13em"
     )
 
 
@@ -660,7 +679,7 @@ def mis_horarios_button():
         rx.link(
             rx.button(
                 rx.text("Mis horarios"),
-                width = "12em",
+                width = "13em",
                 style= {
                     "background_color": "#383956",
                     "_hover": {
@@ -680,7 +699,7 @@ def root_button():
         rx.link(
             rx.button(
                 rx.text("Pagina inicial"),
-                width = "12em",
+                width = "13em",
                 style= {
                     "background_color": "#383956",
                     "_hover": {
@@ -696,7 +715,7 @@ def iniciar_sesion_button():
         rx.link(
             rx.button(
                 rx.text("iniciar sesion"),
-                width = "12em",
+                width = "13em",
                 style= {
                     "background_color": "#383956",
                     "_hover": {
@@ -713,7 +732,7 @@ def crear_usuario_button():
         rx.link(
                 rx.button(
                 rx.text("Crea tu propio usuario"),
-                width = "12em",
+                width = "13em",
                 style= {
                     "background_color": "#383956",
                     "_hover": {
@@ -730,7 +749,7 @@ def turnos_button():
         rx.link(
                 rx.button(
                 rx.text("Turnos"),
-                width = "12em",
+                width = "13em",
                 style= {
                     "background_color": "#383956",
                     "_hover": {
@@ -762,7 +781,7 @@ def desplegable_button():
             rx.link(
                 rx.button(
                     rx.text("turnos"),
-                    width="12em",
+                    width="13em",
                     style={
                         "background_color": "#383956",
                         "_hover": {
@@ -776,7 +795,7 @@ def desplegable_button():
             rx.link(
                 rx.button(
                     rx.text("mis turnos"),
-                    width="12em",
+                    width="13em",
                     style={
                         "background_color": "#383956",
                         "_hover": {
@@ -894,28 +913,16 @@ def navbar(boton = False) -> rx.Component:
         )
     )
 
-# Función para obtener las fechas de los próximos días laborables
-def obtener_fechas_proximas_semanas():
-    today = datetime.now()
-    next_monday = today + timedelta(days=(7 - today.weekday() + 0) % 7)
-    fechas = []
-    
-    for i in range(4):
-        lunes = next_monday + timedelta(weeks=i)
-        for j in range(5):  # Solo lunes a viernes
-            fecha = lunes + timedelta(days=j)
-            fechas.append(fecha.strftime("%d/%m"))
-    
-    return fechas
+
 
 
 # Modificar las funciones de los botones para incluir las fechas
 def day_button_lunes1():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
         rx.button(f"lunes {fechas[0]}",
                   on_click=ButtonState.toggle_text(1),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -924,17 +931,17 @@ def day_button_lunes1():
                   }),
         rx.cond(
             ButtonState.show_text_lunes,
-            button_agregar_clase("lunes", "17:30", fechas[0])
+            button_agregar_clase("semana1", "lunes", "17:30", fechas[0])
         ),
         spacing="1"
     )
 
 def day_button_martes1():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
         rx.button(f"martes {fechas[1]}",
                   on_click=ButtonState.toggle_text(2),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -944,20 +951,20 @@ def day_button_martes1():
         rx.cond(
             ButtonState.show_text_martes,
             rx.hstack(
-                button_agregar_clase("martes", "10:00", fechas[1]),
-                button_agregar_clase("martes", "14:00", fechas[1]),
-                button_agregar_clase("martes", "16:30", fechas[1]),
+                button_agregar_clase("semana1", "martes", "10:00", fechas[1]),
+                button_agregar_clase("semana1", "martes", "14:00", fechas[1]),
+                button_agregar_clase("semana1", "martes", "16:30", fechas[1]),
             )
         ),
         spacing="1"
     )
 
 def day_button_miercoles1():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
-        rx.button(f"miércoles {fechas[2]}",
+        rx.button(f"miercoles {fechas[2]}",
                   on_click=ButtonState.toggle_text(3),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -967,20 +974,20 @@ def day_button_miercoles1():
         rx.cond(
             ButtonState.show_text_miercoles,
             rx.hstack(
-                button_agregar_clase("miércoles", "9:00", fechas[2]),
-                button_agregar_clase("miércoles", "14:00", fechas[2]),
-                button_agregar_clase("miércoles", "16:30", fechas[2]),
+                button_agregar_clase("semana1", "miercoles", "9:00", fechas[2]),
+                button_agregar_clase("semana1", "miercoles", "14:00", fechas[2]),
+                button_agregar_clase("semana1", "miercoles", "16:30", fechas[2]),
             )
         ),
         spacing="1"
     )
 
 def day_button_jueves1():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
         rx.button(f"jueves {fechas[3]}",
                   on_click=ButtonState.toggle_text(4),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -990,20 +997,20 @@ def day_button_jueves1():
         rx.cond(
             ButtonState.show_text_jueves,
             rx.hstack(
-                button_agregar_clase("jueves", "10:00", fechas[3]),
-                button_agregar_clase("jueves", "14:00", fechas[3]),
-                button_agregar_clase("jueves", "16:30", fechas[3]),
+                button_agregar_clase("semana1", "tjueves", "10:00", fechas[3]),
+                button_agregar_clase("semana1", "tjueves", "14:00", fechas[3]),
+                button_agregar_clase("semana1", "tjueves", "16:30", fechas[3]),
             )
         ),
         spacing="1"
     )
 
 def day_button_viernes1():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
         rx.button(f"viernes {fechas[4]}",
                   on_click=ButtonState.toggle_text(5),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -1013,20 +1020,20 @@ def day_button_viernes1():
         rx.cond(
             ButtonState.show_text_viernes,
             rx.hstack(
-                button_agregar_clase("viernes", "9:00", fechas[4]),
-                button_agregar_clase("viernes", "16:00", fechas[4]),
-                button_agregar_clase("viernes", "18:00", fechas[4]),
+                button_agregar_clase("semana1", "viernes", "9:00", fechas[4]),
+                button_agregar_clase("semana1", "viernes", "16:00", fechas[4]),
+                button_agregar_clase("semana1", "viernes", "18:00", fechas[4]),
             )
         ),
         spacing="1"
     )
 
 def day_button_lunes2():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
         rx.button(f"lunes {fechas[5]}",
                   on_click=ButtonState.toggle_text(1),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -1035,17 +1042,17 @@ def day_button_lunes2():
                   }),
         rx.cond(
             ButtonState.show_text_lunes,
-            button_agregar_clase("lunes", "17:30", fechas[5])
+            button_agregar_clase("semana2", "lunes", "17:30", fechas[5])
         ),
         spacing="1"
     )
 
 def day_button_martes2():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
         rx.button(f"martes {fechas[6]}",
                   on_click=ButtonState.toggle_text(2),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -1055,20 +1062,20 @@ def day_button_martes2():
         rx.cond(
             ButtonState.show_text_martes,
             rx.hstack(
-                button_agregar_clase("martes", "10:00", fechas[6]),
-                button_agregar_clase("martes", "14:00", fechas[6]),
-                button_agregar_clase("martes", "16:30", fechas[6]),
+                button_agregar_clase("semana2", "martes", "10:00", fechas[6]),
+                button_agregar_clase("semana2", "martes", "14:00", fechas[6]),
+                button_agregar_clase("semana2", "martes", "16:30", fechas[6]),
             )
         ),
         spacing="1"
     )
 
 def day_button_miercoles2():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
-        rx.button(f"miércoles {fechas[7]}",
+        rx.button(f"miercoles {fechas[7]}",
                   on_click=ButtonState.toggle_text(3),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -1078,20 +1085,20 @@ def day_button_miercoles2():
         rx.cond(
             ButtonState.show_text_miercoles,
             rx.hstack(
-                button_agregar_clase("miércoles", "9:00", fechas[7]),
-                button_agregar_clase("miércoles", "14:00", fechas[7]),
-                button_agregar_clase("miércoles", "16:30", fechas[7]),
+                button_agregar_clase("semana2", "miercoles", "9:00", fechas[7]),
+                button_agregar_clase("semana2", "miercoles", "14:00", fechas[7]),
+                button_agregar_clase("semana2", "miercoles", "16:30", fechas[7]),
             )
         ),
         spacing="1"
     )
 
 def day_button_jueves2():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
         rx.button(f"jueves {fechas[8]}",
                   on_click=ButtonState.toggle_text(4),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -1101,20 +1108,20 @@ def day_button_jueves2():
         rx.cond(
             ButtonState.show_text_jueves,
             rx.hstack(
-                button_agregar_clase("jueves", "10:00", fechas[8]),
-                button_agregar_clase("jueves", "14:00", fechas[8]),
-                button_agregar_clase("jueves", "16:30", fechas[8]),
+                button_agregar_clase("semana2", "tjueves", "10:00", fechas[8]),
+                button_agregar_clase("semana2", "tjueves", "14:00", fechas[8]),
+                button_agregar_clase("semana2", "tjueves", "16:30", fechas[8]),
             )
         ),
         spacing="1"
     )
 
 def day_button_viernes2():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
         rx.button(f"viernes {fechas[9]}",
                   on_click=ButtonState.toggle_text(5),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -1124,20 +1131,20 @@ def day_button_viernes2():
         rx.cond(
             ButtonState.show_text_viernes,
             rx.hstack(
-                button_agregar_clase("viernes", "9:00", fechas[9]),
-                button_agregar_clase("viernes", "16:00", fechas[9]),
-                button_agregar_clase("viernes", "18:00", fechas[9]),
+                button_agregar_clase("semana2", "viernes", "9:00", fechas[9]),
+                button_agregar_clase("semana2", "viernes", "16:00", fechas[9]),
+                button_agregar_clase("semana2", "viernes", "18:00", fechas[9]),
             )
         ),
         spacing="1"
     )
 
 def day_button_lunes3():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
         rx.button(f"lunes {fechas[10]}",
                   on_click=ButtonState.toggle_text(1),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -1146,17 +1153,17 @@ def day_button_lunes3():
                   }),
         rx.cond(
             ButtonState.show_text_lunes,
-            button_agregar_clase("lunes", "17:30", fechas[10])
+            button_agregar_clase("semana3", "lunes", "17:30", fechas[10])
         ),
         spacing="1"
     )
 
 def day_button_martes3():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
         rx.button(f"martes {fechas[11]}",
                   on_click=ButtonState.toggle_text(2),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -1166,20 +1173,20 @@ def day_button_martes3():
         rx.cond(
             ButtonState.show_text_martes,
             rx.hstack(
-                button_agregar_clase("martes", "10:00", fechas[11]),
-                button_agregar_clase("martes", "14:00", fechas[11]),
-                button_agregar_clase("martes", "16:30", fechas[11]),
+                button_agregar_clase("semana3", "martes", "10:00", fechas[11]),
+                button_agregar_clase("semana3", "martes", "14:00", fechas[11]),
+                button_agregar_clase("semana3", "martes", "16:30", fechas[11]),
             )
         ),
         spacing="1"
     )
 
 def day_button_miercoles3():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
-        rx.button(f"miércoles {fechas[12]}",
+        rx.button(f"miercoles {fechas[12]}",
                   on_click=ButtonState.toggle_text(3),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -1189,20 +1196,20 @@ def day_button_miercoles3():
         rx.cond(
             ButtonState.show_text_miercoles,
             rx.hstack(
-                button_agregar_clase("miércoles", "9:00", fechas[12]),
-                button_agregar_clase("miércoles", "14:00", fechas[12]),
-                button_agregar_clase("miércoles", "16:30", fechas[12]),
+                button_agregar_clase("semana3", "miercoles", "9:00", fechas[12]),
+                button_agregar_clase("semana3", "miercoles", "14:00", fechas[12]),
+                button_agregar_clase("semana3", "miercoles", "16:30", fechas[12]),
             )
         ),
         spacing="1"
     )
 
 def day_button_jueves3():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
         rx.button(f"jueves {fechas[13]}",
                   on_click=ButtonState.toggle_text(4),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -1212,20 +1219,20 @@ def day_button_jueves3():
         rx.cond(
             ButtonState.show_text_jueves,
             rx.hstack(
-                button_agregar_clase("jueves", "10:00", fechas[13]),
-                button_agregar_clase("jueves", "14:00", fechas[13]),
-                button_agregar_clase("jueves", "16:30", fechas[13]),
+                button_agregar_clase("semana3", "tjueves", "10:00", fechas[13]),
+                button_agregar_clase("semana3", "tjueves", "14:00", fechas[13]),
+                button_agregar_clase("semana3", "tjueves", "16:30", fechas[13]),
             )
         ),
         spacing="1"
     )
 
 def day_button_viernes3():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
         rx.button(f"viernes {fechas[14]}",
                   on_click=ButtonState.toggle_text(5),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -1235,20 +1242,20 @@ def day_button_viernes3():
         rx.cond(
             ButtonState.show_text_viernes,
             rx.hstack(
-                button_agregar_clase("viernes", "9:00", fechas[14]),
-                button_agregar_clase("viernes", "16:00", fechas[14]),
-                button_agregar_clase("viernes", "18:00", fechas[14]),
+                button_agregar_clase("semana3", "viernes", "9:00", fechas[14]),
+                button_agregar_clase("semana3", "viernes", "16:00", fechas[14]),
+                button_agregar_clase("semana3", "viernes", "18:00", fechas[14]),
             )
         ),
         spacing="1"
     )
 
 def day_button_lunes4():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
         rx.button(f"lunes {fechas[15]}",
                   on_click=ButtonState.toggle_text(1),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -1257,17 +1264,17 @@ def day_button_lunes4():
                   }),
         rx.cond(
             ButtonState.show_text_lunes,
-            button_agregar_clase("lunes", "17:30", fechas[15])
+            button_agregar_clase("semana4", "lunes", "17:30", fechas[15])
         ),
         spacing="1"
     )
 
 def day_button_martes4():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
         rx.button(f"martes {fechas[16]}",
                   on_click=ButtonState.toggle_text(2),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -1277,20 +1284,20 @@ def day_button_martes4():
         rx.cond(
             ButtonState.show_text_martes,
             rx.hstack(
-                button_agregar_clase("martes", "10:00", fechas[16]),
-                button_agregar_clase("martes", "14:00", fechas[16]),
-                button_agregar_clase("martes", "16:30", fechas[16]),
+                button_agregar_clase("semana4", "martes", "10:00", fechas[16]),
+                button_agregar_clase("semana4", "martes", "14:00", fechas[16]),
+                button_agregar_clase("semana4", "martes", "16:30", fechas[16]),
             )
         ),
         spacing="1"
     )
 
 def day_button_miercoles4():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
-        rx.button(f"miércoles {fechas[17]}",
+        rx.button(f"miercoles {fechas[17]}",
                   on_click=ButtonState.toggle_text(3),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -1300,20 +1307,20 @@ def day_button_miercoles4():
         rx.cond(
             ButtonState.show_text_miercoles,
             rx.hstack(
-                button_agregar_clase("miércoles", "9:00", fechas[17]),
-                button_agregar_clase("miércoles", "14:00", fechas[17]),
-                button_agregar_clase("miércoles", "16:30", fechas[17]),
+                button_agregar_clase("semana4", "miercoles", "9:00", fechas[17]),
+                button_agregar_clase("semana4", "miercoles", "14:00", fechas[17]),
+                button_agregar_clase("semana4", "miercoles", "16:30", fechas[17]),
             )
         ),
         spacing="1"
     )
 
 def day_button_jueves4():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
         rx.button(f"jueves {fechas[18]}",
                   on_click=ButtonState.toggle_text(4),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -1323,20 +1330,20 @@ def day_button_jueves4():
         rx.cond(
             ButtonState.show_text_jueves,
             rx.hstack(
-                button_agregar_clase("jueves", "10:00", fechas[18]),
-                button_agregar_clase("jueves", "14:00", fechas[18]),
-                button_agregar_clase("jueves", "16:30", fechas[18]),
+                button_agregar_clase("semana4", "tjueves", "10:00", fechas[18]),
+                button_agregar_clase("semana4", "tjueves", "14:00", fechas[18]),
+                button_agregar_clase("semana4", "tjueves", "16:30", fechas[18]),
             )
         ),
         spacing="1"
     )
 
 def day_button_viernes4():
-    fechas = obtener_fechas_proximas_semanas()
+    fechas = firebase.obtener_fechas_proximas_semanas()
     return rx.hstack(
         rx.button(f"viernes {fechas[19]}",
                   on_click=ButtonState.toggle_text(5),
-                  width="12em",
+                  width="13em",
                   style={
                       "background_color": "#383956",
                       "_hover": {
@@ -1346,13 +1353,125 @@ def day_button_viernes4():
         rx.cond(
             ButtonState.show_text_viernes,
             rx.hstack(
-                button_agregar_clase("viernes", "9:00", fechas[19]),
-                button_agregar_clase("viernes", "16:00", fechas[19]),
-                button_agregar_clase("viernes", "18:00", fechas[19]),
+                button_agregar_clase("semana4", "viernes", "9:00", fechas[19]),
+                button_agregar_clase("semana4", "viernes", "16:00", fechas[19]),
+                button_agregar_clase("semana4", "viernes", "18:00", fechas[19]),
             )
         ),
         spacing="1"
     )
+
+def day_button_lunes5():
+    fechas = firebase.obtener_fechas_proximas_semanas()
+    return rx.hstack(
+        rx.button(f"lunes {fechas[20]}",
+                  on_click=ButtonState.toggle_text(1),
+                  width="13em",
+                  style={
+                      "background_color": "#383956",
+                      "_hover": {
+                          "background_color": "#66A9ED"
+                      }
+                  }),
+        rx.cond(
+            ButtonState.show_text_lunes,
+            button_agregar_clase("semana5", "lunes", "17:30", fechas[20])
+        ),
+        spacing="1"
+    )
+
+def day_button_martes5():
+    fechas = firebase.obtener_fechas_proximas_semanas()
+    return rx.hstack(
+        rx.button(f"martes {fechas[21]}",
+                  on_click=ButtonState.toggle_text(2),
+                  width="13em",
+                  style={
+                      "background_color": "#383956",
+                      "_hover": {
+                          "background_color": "#66A9ED"
+                      }
+                  }),
+        rx.cond(
+            ButtonState.show_text_martes,
+            rx.hstack(
+                button_agregar_clase("semana5", "martes", "10:00", fechas[21]),
+                button_agregar_clase("semana5", "martes", "14:00", fechas[21]),
+                button_agregar_clase("semana5", "martes", "16:30", fechas[21]),
+            )
+        ),
+        spacing="1"
+    )
+
+def day_button_miercoles5():
+    fechas = firebase.obtener_fechas_proximas_semanas()
+    return rx.hstack(
+        rx.button(f"miercoles {fechas[22]}",
+                  on_click=ButtonState.toggle_text(3),
+                  width="13em",
+                  style={
+                      "background_color": "#383956",
+                      "_hover": {
+                          "background_color": "#66A9ED"
+                      }
+                  }),
+        rx.cond(
+            ButtonState.show_text_miercoles,
+            rx.hstack(
+                button_agregar_clase("semana5", "miercoles", "9:00", fechas[22]),
+                button_agregar_clase("semana5", "miercoles", "14:00", fechas[22]),
+                button_agregar_clase("semana5", "miercoles", "16:30", fechas[22]),
+            )
+        ),
+        spacing="1"
+    )
+
+def day_button_jueves5():
+    fechas = firebase.obtener_fechas_proximas_semanas()
+    return rx.hstack(
+        rx.button(f"jueves {fechas[23]}",
+                  on_click=ButtonState.toggle_text(4),
+                  width="13em",
+                  style={
+                      "background_color": "#383956",
+                      "_hover": {
+                          "background_color": "#66A9ED"
+                      }
+                  }),
+        rx.cond(
+            ButtonState.show_text_jueves,
+            rx.hstack(
+                button_agregar_clase("semana5", "tjueves", "10:00", fechas[23]),
+                button_agregar_clase("semana5", "tjueves", "14:00", fechas[23]),
+                button_agregar_clase("semana5", "tjueves", "16:30", fechas[23]),
+            )
+        ),
+        spacing="1"
+    )
+
+def day_button_viernes5():
+    fechas = firebase.obtener_fechas_proximas_semanas()
+    return rx.hstack(
+        rx.button(f"viernes {fechas[24]}",
+                  on_click=ButtonState.toggle_text(5),
+                  width="13em",
+                  style={
+                      "background_color": "#383956",
+                      "_hover": {
+                          "background_color": "#66A9ED"
+                      }
+                  }),
+        rx.cond(
+            ButtonState.show_text_viernes,
+            rx.hstack(
+                button_agregar_clase("semana5", "viernes", "9:00", fechas[24]),
+                button_agregar_clase("semana5", "viernes", "16:00", fechas[24]),
+                button_agregar_clase("semana5", "viernes", "18:00", fechas[24]),
+            )
+        ),
+        spacing="1"
+    )
+
 
 BASE_STYLE = {
     "font_family": "1em",
@@ -1389,12 +1508,12 @@ app.add_page(ingreso)
 app.add_page(mis_horarios)
 app.add_page(prueba)
 
-# app.add_page(user_info)
-# async def main():
-#     # Iniciar la tarea de verificación periódica de la base de datos
-#     asyncio.create_task(check_database_periodically())
-#     app._compile()
+# # app.add_page(user_info)
+# # async def main():
+# #     # Iniciar la tarea de verificación periódica de la base de datos
+# #     asyncio.create_task(check_database_periodically())
+# #     app._compile()
 
-# if name == "main":
-#     asyncio.run(main())
-#"52875400 lucas 12/6"
+# # if name == "main":
+# #     asyncio.run(main())
+# #"52875400 lucas 12/6"
